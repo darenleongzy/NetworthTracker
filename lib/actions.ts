@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { refreshStockPriceIfStale } from "@/lib/stock-api";
-import type { AccountType } from "@/lib/types";
+import type { AccountType, ExpenseCategory, ExpenseSubcategory } from "@/lib/types";
 
 // ── Accounts ──
 
@@ -207,4 +207,77 @@ export async function saveSnapshot(
   );
 
   if (error) throw new Error(error.message);
+}
+
+// ── Expenses ──
+
+export async function createExpense(
+  amount: number,
+  currency: string,
+  category: ExpenseCategory,
+  subcategory: ExpenseSubcategory,
+  expenseDate: string,
+  description?: string
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("expenses")
+    .insert({
+      user_id: user.id,
+      amount,
+      currency,
+      category,
+      subcategory,
+      expense_date: expenseDate,
+      description: description || null,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/expenses");
+  return data;
+}
+
+export async function updateExpense(
+  id: string,
+  amount: number,
+  currency: string,
+  category: ExpenseCategory,
+  subcategory: ExpenseSubcategory,
+  expenseDate: string,
+  description?: string
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("expenses")
+    .update({
+      amount,
+      currency,
+      category,
+      subcategory,
+      expense_date: expenseDate,
+      description: description || null,
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/expenses");
+}
+
+export async function deleteExpense(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("expenses").delete().eq("id", id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/expenses");
 }
