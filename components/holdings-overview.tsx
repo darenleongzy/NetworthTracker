@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -15,14 +16,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableHeader } from "@/components/ui/sortable-header";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/calculations";
+import { useTableSort } from "@/lib/hooks/use-table-sort";
 import type { ExchangeRates } from "@/lib/exchange-rates";
 import type { Account, CashHolding, StockHolding } from "@/lib/types";
 
 type AccountWithHoldings = Account & {
   cash_holdings: CashHolding[];
   stock_holdings: StockHolding[];
+};
+
+type HoldingRow = {
+  accountName: string;
+  accountId: string;
+  type: "cash" | "stock";
+  label: string;
+  originalCurrency: string;
+  originalValue: number;
+  convertedValue: number;
+  gainLoss: number | null;
 };
 
 export function HoldingsOverview({
@@ -45,49 +59,47 @@ export function HoldingsOverview({
   }
 
   // Build a flat list of all holdings
-  const rows: {
-    accountName: string;
-    accountId: string;
-    type: "cash" | "stock";
-    label: string;
-    originalCurrency: string;
-    originalValue: number;
-    convertedValue: number;
-    gainLoss?: number;
-  }[] = [];
+  const rows = useMemo<HoldingRow[]>(() => {
+    const result: HoldingRow[] = [];
 
-  for (const account of accounts) {
-    for (const h of account.cash_holdings) {
-      const originalValue = Number(h.balance);
-      const convertedValue = convertToBase(originalValue, h.currency);
-      rows.push({
-        accountName: account.name,
-        accountId: account.id,
-        type: "cash",
-        label: h.currency,
-        originalCurrency: h.currency,
-        originalValue,
-        convertedValue,
-      });
+    for (const account of accounts) {
+      for (const h of account.cash_holdings) {
+        const originalValue = Number(h.balance);
+        const convertedValue = convertToBase(originalValue, h.currency);
+        result.push({
+          accountName: account.name,
+          accountId: account.id,
+          type: "cash",
+          label: h.currency,
+          originalCurrency: h.currency,
+          originalValue,
+          convertedValue,
+          gainLoss: null,
+        });
+      }
+      for (const h of account.stock_holdings) {
+        const price = prices[h.ticker.toUpperCase()] ?? 0;
+        const costValueUSD = Number(h.shares) * Number(h.cost_basis_per_share);
+        const currentValueUSD = price > 0 ? Number(h.shares) * price : costValueUSD;
+        const currentValue = convertToBase(currentValueUSD, "USD");
+        const costValue = convertToBase(costValueUSD, "USD");
+        result.push({
+          accountName: account.name,
+          accountId: account.id,
+          type: "stock",
+          label: `${h.ticker} (${h.shares} shares)`,
+          originalCurrency: "USD",
+          originalValue: costValueUSD,
+          convertedValue: currentValue,
+          gainLoss: price > 0 ? currentValue - costValue : null,
+        });
+      }
     }
-    for (const h of account.stock_holdings) {
-      const price = prices[h.ticker.toUpperCase()] ?? 0;
-      const costValueUSD = Number(h.shares) * Number(h.cost_basis_per_share);
-      const currentValueUSD = price > 0 ? Number(h.shares) * price : costValueUSD;
-      const currentValue = convertToBase(currentValueUSD, "USD");
-      const costValue = convertToBase(costValueUSD, "USD");
-      rows.push({
-        accountName: account.name,
-        accountId: account.id,
-        type: "stock",
-        label: `${h.ticker} (${h.shares} shares)`,
-        originalCurrency: "USD",
-        originalValue: costValueUSD, // Always show cost basis as original for stocks
-        convertedValue: currentValue,
-        gainLoss: price > 0 ? currentValue - costValue : undefined, // Only show gain/loss if we have price
-      });
-    }
-  }
+
+    return result;
+  }, [accounts, prices, baseCurrency, exchangeRates]);
+
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
 
   if (rows.length === 0) {
     return (
@@ -121,13 +133,34 @@ export function HoldingsOverview({
               <TableHead>Account</TableHead>
               <TableHead>Holding</TableHead>
               <TableHead>Type</TableHead>
-              <TableHead className="text-right">Cost / Balance</TableHead>
-              <TableHead className="text-right">Value ({baseCurrency})</TableHead>
-              <TableHead className="text-right">Gain/Loss</TableHead>
+              <SortableHeader
+                label="Cost / Balance"
+                sortKey="originalValue"
+                currentSortKey={sortConfig.key as string | null}
+                direction={sortConfig.direction}
+                onSort={() => requestSort("originalValue")}
+                className="text-right"
+              />
+              <SortableHeader
+                label={`Value (${baseCurrency})`}
+                sortKey="convertedValue"
+                currentSortKey={sortConfig.key as string | null}
+                direction={sortConfig.direction}
+                onSort={() => requestSort("convertedValue")}
+                className="text-right"
+              />
+              <SortableHeader
+                label="Gain/Loss"
+                sortKey="gainLoss"
+                currentSortKey={sortConfig.key as string | null}
+                direction={sortConfig.direction}
+                onSort={() => requestSort("gainLoss")}
+                className="text-right"
+              />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row, i) => (
+            {sortedData.map((row, i) => (
               <TableRow key={i}>
                 <TableCell>
                   <Link
@@ -152,7 +185,7 @@ export function HoldingsOverview({
                   {formatCurrency(row.convertedValue, baseCurrency)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {row.gainLoss !== undefined ? (
+                  {row.gainLoss !== null ? (
                     <span
                       className={
                         row.gainLoss >= 0 ? "text-green-600" : "text-red-600"

@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableHeader } from "@/components/ui/sortable-header";
 import { ExpenseForm } from "@/components/forms/expense-form";
 import { Trash2 } from "lucide-react";
 import type { Expense } from "@/lib/types";
@@ -18,8 +19,11 @@ import {
   getCategoryLabel,
   getSubcategoryLabel,
 } from "@/lib/expense-categories";
+import { useTableSort } from "@/lib/hooks/use-table-sort";
 
 export function ExpensesTable({ expenses }: { expenses: Expense[] }) {
+  const { sortedData, sortConfig, requestSort } = useTableSort(expenses);
+
   if (expenses.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-4 text-center">
@@ -32,16 +36,29 @@ export function ExpensesTable({ expenses }: { expenses: Expense[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Date</TableHead>
+          <SortableHeader
+            label="Date"
+            sortKey="expense_date"
+            currentSortKey={sortConfig.key as string | null}
+            direction={sortConfig.direction}
+            onSort={() => requestSort("expense_date")}
+          />
           <TableHead>Category</TableHead>
           <TableHead>Subcategory</TableHead>
           <TableHead>Description</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
+          <SortableHeader
+            label="Amount"
+            sortKey="amount"
+            currentSortKey={sortConfig.key as string | null}
+            direction={sortConfig.direction}
+            onSort={() => requestSort("amount")}
+            className="text-right"
+          />
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {expenses.map((expense) => (
+        {sortedData.map((expense) => (
           <TableRow key={expense.id}>
             <TableCell>
               {new Date(expense.expense_date).toLocaleDateString()}
