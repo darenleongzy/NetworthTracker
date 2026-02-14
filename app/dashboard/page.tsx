@@ -1,0 +1,119 @@
+export const dynamic = "force-dynamic";
+
+import { createClient } from "@/lib/supabase/server";
+import { getStockPrices } from "@/lib/stock-api";
+import {
+  calculateCashTotal,
+  calculateInvestmentValue,
+  calculateInvestmentCost,
+} from "@/lib/calculations";
+import { saveSnapshot, getUserPreferences } from "@/lib/actions";
+import { getExchangeRates } from "@/lib/exchange-rates";
+import { SummaryCards } from "@/components/summary-cards";
+import { BaseCurrencySelector } from "@/components/base-currency-selector";
+import { NetWorthChart } from "@/components/charts/net-worth-chart";
+import { AllocationChart } from "@/components/charts/allocation-chart";
+import { GainsChart } from "@/components/charts/gains-chart";
+import { HoldingsOverview } from "@/components/holdings-overview";
+import type { Account, CashHolding, StockHolding } from "@/lib/types";
+
+export default async function DashboardPage() {
+  const supabase = await createClient();
+
+  // Fetch all user data in parallel
+  const [accountsRes, snapshotsRes, preferences] = await Promise.all([
+    supabase
+      .from("accounts")
+      .select("*, cash_holdings(*), stock_holdings(*)")
+      .order("created_at"),
+    supabase
+      .from("net_worth_snapshots")
+      .select("*")
+      .order("snapshot_date", { ascending: true })
+      .limit(90),
+    getUserPreferences(),
+  ]);
+
+  const accounts = (accountsRes.data ?? []) as (Account & {
+    cash_holdings: CashHolding[];
+    stock_holdings: StockHolding[];
+  })[];
+  const snapshots = snapshotsRes.data ?? [];
+  const baseCurrency = preferences.base_currency;
+
+  // Fetch exchange rates for base currency
+  const exchangeRates = await getExchangeRates(baseCurrency);
+
+  // Collect all stock tickers and fetch prices
+  const allStockHoldings = accounts.flatMap((a) => a.stock_holdings);
+  const tickers = allStockHoldings.map((h) => h.ticker);
+  const prices = tickers.length > 0 ? await getStockPrices(tickers) : {};
+
+  // Calculate totals with currency conversion
+  const allCashHoldings = accounts.flatMap((a) => a.cash_holdings);
+  const cashTotal = calculateCashTotal(allCashHoldings, baseCurrency, exchangeRates);
+
+  // Stock prices are in USD, convert to base currency if needed
+  let investmentValue = calculateInvestmentValue(allStockHoldings, prices);
+  let investmentCost = calculateInvestmentCost(allStockHoldings);
+
+  // Convert USD investment values to base currency
+  if (baseCurrency !== "USD") {
+    const usdRate = exchangeRates["USD"];
+    if (usdRate && usdRate > 0) {
+      investmentValue = investmentValue / usdRate;
+      investmentCost = investmentCost / usdRate;
+    }
+  }
+
+  const totalNetWorth = cashTotal + investmentValue;
+  const totalGainLoss = investmentValue - investmentCost;
+  const gainLossPercent =
+    investmentCost > 0 ? (totalGainLoss / investmentCost) * 100 : 0;
+
+  // Save today's snapshot (always in current base currency value)
+  if (accounts.length > 0) {
+    try {
+      await saveSnapshot(totalNetWorth, cashTotal, investmentValue);
+    } catch {
+      // Snapshot save is best-effort
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Your financial overview</p>
+        </div>
+        <BaseCurrencySelector currentCurrency={baseCurrency} />
+      </div>
+
+      <SummaryCards
+        totalNetWorth={totalNetWorth}
+        cashTotal={cashTotal}
+        investmentValue={investmentValue}
+        totalGainLoss={totalGainLoss}
+        gainLossPercent={gainLossPercent}
+        baseCurrency={baseCurrency}
+      />
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <NetWorthChart snapshots={snapshots} />
+        <AllocationChart cashTotal={cashTotal} investmentValue={investmentValue} />
+      </div>
+
+      {snapshots.length > 1 && (
+        <GainsChart snapshots={snapshots} />
+      )}
+
+      <HoldingsOverview
+        accounts={accounts}
+        prices={prices}
+        baseCurrency={baseCurrency}
+        exchangeRates={exchangeRates}
+      />
+    </div>
+  );
+}
