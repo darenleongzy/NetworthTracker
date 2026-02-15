@@ -10,11 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableHeader } from "@/components/ui/sortable-header";
 import { CashHoldingForm } from "@/components/forms/cash-holding-form";
 import { Trash2 } from "lucide-react";
 import type { CashHolding } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import { getCurrencyName } from "@/lib/currencies";
+import { useTableSort } from "@/lib/hooks/use-table-sort";
 
 export function CashHoldingsTable({
   holdings,
@@ -23,6 +25,8 @@ export function CashHoldingsTable({
   holdings: CashHolding[];
   accountId: string;
 }) {
+  const { sortedData, sortConfig, requestSort } = useTableSort(holdings);
+
   if (holdings.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-4 text-center">
@@ -36,12 +40,19 @@ export function CashHoldingsTable({
       <TableHeader>
         <TableRow>
           <TableHead>Currency</TableHead>
-          <TableHead className="text-right">Balance</TableHead>
+          <SortableHeader
+            label="Balance"
+            sortKey="balance"
+            currentSortKey={sortConfig.key as string | null}
+            direction={sortConfig.direction}
+            onSort={() => requestSort("balance")}
+            className="text-right"
+          />
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {holdings.map((h) => (
+        {sortedData.map((h) => (
           <TableRow key={h.id}>
             <TableCell>
               <span className="font-medium">{h.currency}</span>

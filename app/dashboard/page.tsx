@@ -14,14 +14,21 @@ import { BaseCurrencySelector } from "@/components/base-currency-selector";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
 import { AllocationChart } from "@/components/charts/allocation-chart";
 import { GainsChart } from "@/components/charts/gains-chart";
+import { ExpenseBreakdownChart } from "@/components/charts/expense-breakdown-chart";
 import { HoldingsOverview } from "@/components/holdings-overview";
-import type { Account, CashHolding, StockHolding } from "@/lib/types";
+import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
 
+  // Get current month date range
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split("T")[0];
+
   // Fetch all user data in parallel
-  const [accountsRes, snapshotsRes, preferences] = await Promise.all([
+  const [accountsRes, snapshotsRes, expensesRes, preferences] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
@@ -31,6 +38,11 @@ export default async function DashboardPage() {
       .select("*")
       .order("snapshot_date", { ascending: true })
       .limit(90),
+    supabase
+      .from("expenses")
+      .select("*")
+      .gte("expense_date", currentMonthStart)
+      .order("expense_date", { ascending: false }),
     getUserPreferences(),
   ]);
 
@@ -39,6 +51,7 @@ export default async function DashboardPage() {
     stock_holdings: StockHolding[];
   })[];
   const snapshots = snapshotsRes.data ?? [];
+  const currentMonthExpenses = (expensesRes.data ?? []) as Expense[];
   const baseCurrency = preferences.base_currency;
 
   // Fetch exchange rates for base currency
@@ -99,9 +112,13 @@ export default async function DashboardPage() {
         baseCurrency={baseCurrency}
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <NetWorthChart snapshots={snapshots} />
         <AllocationChart cashTotal={cashTotal} investmentValue={investmentValue} />
+        <ExpenseBreakdownChart
+          expenses={currentMonthExpenses}
+          title="This Month's Expenses"
+        />
       </div>
 
       {snapshots.length > 1 && (

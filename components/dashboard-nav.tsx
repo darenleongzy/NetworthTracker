@@ -13,12 +13,14 @@ import {
   LogOut,
   Menu,
   TrendingUp,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/accounts", label: "Accounts", icon: Wallet },
+  { href: "/dashboard/expenses", label: "Expenses", icon: Receipt },
 ];
 
 function NavContent({

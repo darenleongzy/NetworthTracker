@@ -59,3 +59,46 @@ export interface AccountWithHoldings extends Account {
   cash_holdings: CashHolding[];
   stock_holdings: StockHolding[];
 }
+
+// Expense types
+export type ExpenseCategory = "recurring" | "non_recurring";
+
+export type RecurringSubcategory =
+  | "rent_mortgage"
+  | "utilities"
+  | "insurance"
+  | "subscriptions"
+  | "loan_payments"
+  | "memberships"
+  | "childcare"
+  | "phone_internet"
+  | "family";
+
+export type NonRecurringSubcategory =
+  | "shopping"
+  | "food_dining"
+  | "groceries"
+  | "transportation"
+  | "entertainment"
+  | "travel"
+  | "healthcare"
+  | "education"
+  | "gifts"
+  | "home_maintenance"
+  | "personal_care"
+  | "other";
+
+export type ExpenseSubcategory = RecurringSubcategory | NonRecurringSubcategory;
+
+export interface Expense {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  category: ExpenseCategory;
+  subcategory: ExpenseSubcategory;
+  description: string | null;
+  expense_date: string;
+  created_at: string;
+  updated_at: string;
+}
