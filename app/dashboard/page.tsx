@@ -8,7 +8,8 @@ import {
   calculateInvestmentCost,
 } from "@/lib/calculations";
 import { saveSnapshot, getUserPreferences } from "@/lib/actions";
-import { getExchangeRates } from "@/lib/exchange-rates";
+import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
+import type { ExchangeRates } from "@/lib/exchange-rates";
 import { SummaryCards } from "@/components/summary-cards";
 import { BaseCurrencySelector } from "@/components/base-currency-selector";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
@@ -103,22 +104,39 @@ export default async function DashboardPage() {
   const today = new Date().toISOString().split("T")[0];
   if (accounts.length > 0) {
     try {
-      await saveSnapshot(totalNetWorth, cashTotal, investmentValue);
+      await saveSnapshot(totalNetWorth, cashTotal, investmentValue, baseCurrency);
     } catch {
       // Snapshot save is best-effort
     }
   }
 
-  // Update snapshots to reflect current values for today
-  // (The fetched data may be stale since we fetch before saving)
+  // Convert historical snapshots to current base currency
+  // and update today's snapshot with current calculated values
   const snapshots = snapshotsRaw.map((s) => {
     if (s.snapshot_date === today) {
+      // Use current calculated values for today
       return {
         ...s,
         total_value: totalNetWorth,
         cash_value: cashTotal,
         investment_value: investmentValue,
+        currency: baseCurrency,
       };
+    }
+
+    // Convert historical snapshots to current base currency
+    const snapshotCurrency = s.currency || "USD";
+    if (snapshotCurrency !== baseCurrency) {
+      const rate = exchangeRates[snapshotCurrency];
+      if (rate && rate > 0) {
+        return {
+          ...s,
+          total_value: Number(s.total_value) / rate,
+          cash_value: Number(s.cash_value) / rate,
+          investment_value: Number(s.investment_value) / rate,
+          currency: baseCurrency,
+        };
+      }
     }
     return s;
   });
@@ -133,6 +151,7 @@ export default async function DashboardPage() {
       cash_value: cashTotal,
       investment_value: investmentValue,
       snapshot_date: today,
+      currency: baseCurrency,
       created_at: new Date().toISOString(),
     });
   }
@@ -151,22 +170,24 @@ export default async function DashboardPage() {
         totalNetWorth={totalNetWorth}
         cashTotal={cashTotal}
         investmentValue={investmentValue}
+        cpfSrsTotal={cpfTotal + srsTotal}
         totalGainLoss={totalGainLoss}
-        gainLossPercent={gainLossPercent}
         baseCurrency={baseCurrency}
       />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <NetWorthChart snapshots={snapshots} />
+        <NetWorthChart snapshots={snapshots} baseCurrency={baseCurrency} />
         <AllocationChart
           cashTotal={cashTotal}
           investmentValue={investmentValue}
           cpfTotal={cpfTotal}
           srsTotal={srsTotal}
+          baseCurrency={baseCurrency}
         />
         <ExpenseBreakdownChart
           expenses={currentMonthExpenses}
           title="This Month's Expenses"
+          baseCurrency={baseCurrency}
         />
       </div>
 

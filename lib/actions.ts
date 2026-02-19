@@ -223,7 +223,8 @@ export async function updateBaseCurrency(baseCurrency: string) {
 export async function saveSnapshot(
   totalValue: number,
   cashValue: number,
-  investmentValue: number
+  investmentValue: number,
+  currency: string = "USD"
 ) {
   const supabase = await createClient();
   const {
@@ -240,6 +241,7 @@ export async function saveSnapshot(
       cash_value: cashValue,
       investment_value: investmentValue,
       snapshot_date: today,
+      currency,
     },
     { onConflict: "user_id,snapshot_date" }
   );

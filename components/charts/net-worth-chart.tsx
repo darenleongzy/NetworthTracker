@@ -16,22 +16,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getCurrencySymbol } from "@/lib/currencies";
 import type { NetWorthSnapshot } from "@/lib/types";
 
 type TimeRange = "daily" | "monthly" | "yearly";
 
-function getLast14Days(snapshots: NetWorthSnapshot[]) {
+function getLast7Days(snapshots: NetWorthSnapshot[]) {
   // Create a map of date -> snapshot
   const snapshotMap = new Map<string, NetWorthSnapshot>();
   for (const s of snapshots) {
     snapshotMap.set(s.snapshot_date, s);
   }
 
-  // Get today and 13 days ago (14 days total)
+  // Get today and 6 days ago (7 days total)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 13);
+  startDate.setDate(startDate.getDate() - 6);
 
   // Find the most recent snapshot before or on startDate to initialize lastValue
   let lastValue = { total: 0, cash: 0, investments: 0 };
@@ -49,11 +50,11 @@ function getLast14Days(snapshots: NetWorthSnapshot[]) {
     }
   }
 
-  // Fill in all 14 days
+  // Fill in all 7 days
   const result: { date: string; total: number; cash: number; investments: number }[] = [];
   const currentDate = new Date(startDate);
 
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 7; i++) {
     const dateStr = currentDate.toISOString().split("T")[0];
     const snapshot = snapshotMap.get(dateStr);
 
@@ -195,7 +196,7 @@ function aggregateSnapshots(
   range: TimeRange
 ) {
   if (range === "daily") {
-    return getLast14Days(snapshots);
+    return getLast7Days(snapshots);
   }
   if (range === "monthly") {
     return getLast12Months(snapshots);
@@ -205,10 +206,13 @@ function aggregateSnapshots(
 
 export function NetWorthChart({
   snapshots,
+  baseCurrency = "USD",
 }: {
   snapshots: NetWorthSnapshot[];
+  baseCurrency?: string;
 }) {
   const [range, setRange] = useState<TimeRange>("daily");
+  const currencySymbol = getCurrencySymbol(baseCurrency);
 
   const data = useMemo(
     () => aggregateSnapshots(snapshots, range),
@@ -252,16 +256,21 @@ export function NetWorthChart({
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="date" className="text-xs" />
+            <XAxis
+              dataKey="date"
+              className="text-xs"
+              interval={0}
+              tick={{ fontSize: 11 }}
+            />
             <YAxis
               className="text-xs"
               tickFormatter={(v) =>
-                `$${(v / 1000).toFixed(0)}k`
+                `${currencySymbol}${(v / 1000).toFixed(0)}k`
               }
             />
             <Tooltip
               formatter={(value: number) =>
-                `$${value.toLocaleString("en-US", {
+                `${currencySymbol}${value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                 })}`
               }

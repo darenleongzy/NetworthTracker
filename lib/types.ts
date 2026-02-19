@@ -48,6 +48,7 @@ export interface NetWorthSnapshot {
   cash_value: number;
   investment_value: number;
   snapshot_date: string;
+  currency: string;
   created_at: string;
 }
 
