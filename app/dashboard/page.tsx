@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     cash_holdings: CashHolding[];
     stock_holdings: StockHolding[];
   })[];
-  const snapshots = snapshotsRes.data ?? [];
+  const snapshotsRaw = snapshotsRes.data ?? [];
   const currentMonthExpenses = (expensesRes.data ?? []) as Expense[];
   const baseCurrency = preferences.base_currency;
 
@@ -100,12 +100,41 @@ export default async function DashboardPage() {
     investmentCost > 0 ? (totalGainLoss / investmentCost) * 100 : 0;
 
   // Save today's snapshot (always in current base currency value)
+  const today = new Date().toISOString().split("T")[0];
   if (accounts.length > 0) {
     try {
       await saveSnapshot(totalNetWorth, cashTotal, investmentValue);
     } catch {
       // Snapshot save is best-effort
     }
+  }
+
+  // Update snapshots to reflect current values for today
+  // (The fetched data may be stale since we fetch before saving)
+  const snapshots = snapshotsRaw.map((s) => {
+    if (s.snapshot_date === today) {
+      return {
+        ...s,
+        total_value: totalNetWorth,
+        cash_value: cashTotal,
+        investment_value: investmentValue,
+      };
+    }
+    return s;
+  });
+
+  // If today's snapshot doesn't exist in the fetched data, add it
+  const hasTodaySnapshot = snapshotsRaw.some((s) => s.snapshot_date === today);
+  if (!hasTodaySnapshot && accounts.length > 0) {
+    snapshots.push({
+      id: "current",
+      user_id: "",
+      total_value: totalNetWorth,
+      cash_value: cashTotal,
+      investment_value: investmentValue,
+      snapshot_date: today,
+      created_at: new Date().toISOString(),
+    });
   }
 
   return (
