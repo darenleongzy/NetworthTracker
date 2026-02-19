@@ -62,9 +62,24 @@ export default async function DashboardPage() {
   const tickers = allStockHoldings.map((h) => h.ticker);
   const prices = tickers.length > 0 ? await getStockPrices(tickers) : {};
 
+  // Separate accounts by type
+  const cashAccounts = accounts.filter((a) => a.type === "cash");
+  const investmentAccounts = accounts.filter((a) => a.type === "investment");
+  const cpfAccounts = accounts.filter((a) => a.type === "cpf");
+  const srsAccounts = accounts.filter((a) => a.type === "srs");
+
   // Calculate totals with currency conversion
-  const allCashHoldings = accounts.flatMap((a) => a.cash_holdings);
-  const cashTotal = calculateCashTotal(allCashHoldings, baseCurrency, exchangeRates);
+  // Cash total (only from cash-type accounts)
+  const cashOnlyHoldings = cashAccounts.flatMap((a) => a.cash_holdings);
+  const cashTotal = calculateCashTotal(cashOnlyHoldings, baseCurrency, exchangeRates);
+
+  // CPF total
+  const cpfHoldings = cpfAccounts.flatMap((a) => a.cash_holdings);
+  const cpfTotal = calculateCashTotal(cpfHoldings, baseCurrency, exchangeRates);
+
+  // SRS total
+  const srsHoldings = srsAccounts.flatMap((a) => a.cash_holdings);
+  const srsTotal = calculateCashTotal(srsHoldings, baseCurrency, exchangeRates);
 
   // Stock prices are in USD, convert to base currency if needed
   let investmentValue = calculateInvestmentValue(allStockHoldings, prices);
@@ -79,7 +94,7 @@ export default async function DashboardPage() {
     }
   }
 
-  const totalNetWorth = cashTotal + investmentValue;
+  const totalNetWorth = cashTotal + investmentValue + cpfTotal + srsTotal;
   const totalGainLoss = investmentValue - investmentCost;
   const gainLossPercent =
     investmentCost > 0 ? (totalGainLoss / investmentCost) * 100 : 0;
@@ -114,7 +129,12 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <NetWorthChart snapshots={snapshots} />
-        <AllocationChart cashTotal={cashTotal} investmentValue={investmentValue} />
+        <AllocationChart
+          cashTotal={cashTotal}
+          investmentValue={investmentValue}
+          cpfTotal={cpfTotal}
+          srsTotal={srsTotal}
+        />
         <ExpenseBreakdownChart
           expenses={currentMonthExpenses}
           title="This Month's Expenses"

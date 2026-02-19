@@ -53,21 +53,59 @@ export async function upsertCashHolding(
   accountId: string,
   balance: number,
   currency: string = "USD",
-  holdingId?: string
+  holdingId?: string,
+  label?: string | null
 ) {
   const supabase = await createClient();
 
   if (holdingId) {
     const { error } = await supabase
       .from("cash_holdings")
-      .update({ balance, currency })
+      .update({ balance, currency, label })
       .eq("id", holdingId);
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase
       .from("cash_holdings")
-      .insert({ account_id: accountId, balance, currency });
+      .insert({ account_id: accountId, balance, currency, label });
     if (error) throw new Error(error.message);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/accounts/${accountId}`);
+}
+
+export async function upsertCpfHoldings(
+  accountId: string,
+  holdings: { label: string; balance: number }[]
+) {
+  const supabase = await createClient();
+
+  // Get existing CPF holdings for this account
+  const { data: existing } = await supabase
+    .from("cash_holdings")
+    .select("id, label")
+    .eq("account_id", accountId)
+    .in("label", ["OA", "SA", "MA"]);
+
+  const existingMap = new Map(existing?.map((h) => [h.label, h.id]) ?? []);
+
+  for (const { label, balance } of holdings) {
+    const existingId = existingMap.get(label);
+    if (existingId) {
+      // Update existing
+      const { error } = await supabase
+        .from("cash_holdings")
+        .update({ balance, currency: "SGD" })
+        .eq("id", existingId);
+      if (error) throw new Error(error.message);
+    } else {
+      // Insert new
+      const { error } = await supabase
+        .from("cash_holdings")
+        .insert({ account_id: accountId, balance, currency: "SGD", label });
+      if (error) throw new Error(error.message);
+    }
   }
 
   revalidatePath("/dashboard");

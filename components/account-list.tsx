@@ -115,8 +115,8 @@ export function AccountList({
                       {formatCurrency(accountTotal, baseCurrency)}
                     </p>
                   </div>
-                  <Badge variant={account.type === "cash" ? "default" : "secondary"}>
-                    {account.type}
+                  <Badge variant={account.type === "investment" ? "secondary" : "default"}>
+                    {account.type.toUpperCase()}
                   </Badge>
                   <Button
                     variant="ghost"

@@ -66,19 +66,20 @@ export function ExpenseBreakdownChart({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={280}>
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={100}
+              innerRadius={45}
+              outerRadius={70}
               paddingAngle={2}
               dataKey="value"
-              label={({ name, percent }) =>
-                percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
+              label={({ percent }) =>
+                percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ""
               }
+              labelLine={false}
             >
               {data.map((entry) => (
                 <Cell
@@ -94,7 +95,13 @@ export function ExpenseBreakdownChart({
                 })}`
               }
             />
-            <Legend />
+            <Legend
+              layout="horizontal"
+              verticalAlign="bottom"
+              align="center"
+              iconType="circle"
+              wrapperStyle={{ paddingTop: 8 }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>
