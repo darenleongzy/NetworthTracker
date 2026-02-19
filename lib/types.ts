@@ -38,6 +38,7 @@ export interface StockHolding {
 export interface StockPrice {
   ticker: string;
   price: number;
+  currency: string;
   fetched_at: string;
 }
 
@@ -82,7 +83,9 @@ export type RecurringSubcategory =
   | "memberships"
   | "childcare"
   | "phone_internet"
-  | "family";
+  | "family"
+  | "tax"
+  | "car";
 
 export type NonRecurringSubcategory =
   | "shopping"
@@ -96,6 +99,8 @@ export type NonRecurringSubcategory =
   | "gifts"
   | "home_maintenance"
   | "personal_care"
+  | "tax"
+  | "car"
   | "other";
 
 export type ExpenseSubcategory = RecurringSubcategory | NonRecurringSubcategory;

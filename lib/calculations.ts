@@ -1,5 +1,6 @@
 import type { CashHolding, StockHolding } from "@/lib/types";
 import type { ExchangeRates } from "@/lib/exchange-rates";
+import type { StockPriceData } from "@/lib/stock-api";
 import { getCurrencySymbol } from "@/lib/currencies";
 
 export function formatCurrency(value: number, currencyCode: string = "USD"): string {
@@ -63,11 +64,29 @@ export function calculateCashTotalSimple(holdings: CashHolding[]): number {
 
 export function calculateInvestmentValue(
   holdings: StockHolding[],
-  prices: Record<string, number>
+  prices: Record<string, StockPriceData>,
+  baseCurrency: string = "USD",
+  exchangeRates: ExchangeRates = {}
 ): number {
   return holdings.reduce((sum, h) => {
-    const price = prices[h.ticker.toUpperCase()] ?? 0;
-    return sum + Number(h.shares) * price;
+    const priceData = prices[h.ticker.toUpperCase()];
+    if (!priceData) return sum;
+
+    const valueInNativeCurrency = Number(h.shares) * priceData.price;
+
+    // Convert to base currency if needed
+    if (priceData.currency === baseCurrency) {
+      return sum + valueInNativeCurrency;
+    }
+
+    // exchangeRates are FROM baseCurrency TO other currencies
+    // So to convert FROM other TO base, we divide
+    const rate = exchangeRates[priceData.currency];
+    if (!rate || rate === 0) {
+      console.warn(`No exchange rate for ${priceData.currency}, using raw value`);
+      return sum + valueInNativeCurrency;
+    }
+    return sum + valueInNativeCurrency / rate;
   }, 0);
 }
 
@@ -80,9 +99,11 @@ export function calculateInvestmentCost(holdings: StockHolding[]): number {
 
 export function calculateGainLoss(
   holdings: StockHolding[],
-  prices: Record<string, number>
+  prices: Record<string, StockPriceData>,
+  baseCurrency: string = "USD",
+  exchangeRates: ExchangeRates = {}
 ): { absolute: number; percent: number } {
-  const currentValue = calculateInvestmentValue(holdings, prices);
+  const currentValue = calculateInvestmentValue(holdings, prices, baseCurrency, exchangeRates);
   const costBasis = calculateInvestmentCost(holdings);
   const absolute = currentValue - costBasis;
   const percent = costBasis > 0 ? (absolute / costBasis) * 100 : 0;

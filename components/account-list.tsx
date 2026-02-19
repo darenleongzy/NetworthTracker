@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import type { ExchangeRates } from "@/lib/exchange-rates";
+import type { StockPriceData } from "@/lib/stock-api";
 import type { AccountWithHoldings } from "@/lib/types";
 
 export function AccountList({
@@ -25,7 +26,7 @@ export function AccountList({
   accounts: AccountWithHoldings[];
   baseCurrency?: string;
   exchangeRates?: ExchangeRates;
-  stockPrices?: Record<string, number>;
+  stockPrices?: Record<string, StockPriceData>;
 }) {
   // Calculate account total in base currency
   function calculateAccountTotal(account: AccountWithHoldings): number {
@@ -46,18 +47,20 @@ export function AccountList({
       }
     }
 
-    // Sum stock holdings (prices are in USD, convert to base)
+    // Sum stock holdings (prices are in their native currency, convert to base)
     for (const h of account.stock_holdings) {
-      const price = stockPrices[h.ticker.toUpperCase()] ?? 0;
-      const valueUSD = Number(h.shares) * price;
-      if (baseCurrency === "USD") {
-        total += valueUSD;
+      const priceData = stockPrices[h.ticker.toUpperCase()];
+      const price = priceData?.price ?? 0;
+      const priceCurrency = priceData?.currency ?? "USD";
+      const valueNative = Number(h.shares) * price;
+      if (priceCurrency === baseCurrency) {
+        total += valueNative;
       } else {
-        const usdRate = exchangeRates["USD"];
-        if (usdRate && usdRate > 0) {
-          total += valueUSD / usdRate;
+        const rate = exchangeRates[priceCurrency];
+        if (rate && rate > 0) {
+          total += valueNative / rate;
         } else {
-          total += valueUSD;
+          total += valueNative;
         }
       }
     }
