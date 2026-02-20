@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/card";
 import { CashHoldingForm } from "@/components/forms/cash-holding-form";
 import { StockHoldingForm } from "@/components/forms/stock-holding-form";
+import { CpfHoldingsForm } from "@/components/forms/cpf-holdings-form";
 import { CashHoldingsTable } from "@/components/cash-holdings-table";
 import { StockHoldingsTable } from "@/components/stock-holdings-table";
+import { CPF_SUB_ACCOUNTS } from "@/lib/types";
 import { ArrowLeft, Check, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import type { ExchangeRates } from "@/lib/exchange-rates";
@@ -118,8 +120,8 @@ export function AccountDetail({
                 </Button>
               </>
             )}
-            <Badge variant={account.type === "cash" ? "default" : "secondary"}>
-              {account.type}
+            <Badge variant={account.type === "investment" ? "secondary" : "default"}>
+              {account.type.toUpperCase()}
             </Badge>
           </div>
         </div>
@@ -131,7 +133,20 @@ export function AccountDetail({
         </div>
       </div>
 
-      {account.type === "cash" ? (
+      {account.type === "cpf" ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>CPF Balances</CardTitle>
+            <CpfHoldingsForm
+              accountId={account.id}
+              holdings={account.cash_holdings}
+            />
+          </CardHeader>
+          <CardContent>
+            <CpfBalancesDisplay holdings={account.cash_holdings} />
+          </CardContent>
+        </Card>
+      ) : account.type !== "investment" ? (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Cash Holdings</CardTitle>
@@ -164,6 +179,51 @@ export function AccountDetail({
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function CpfBalancesDisplay({ holdings }: { holdings: { label?: string | null; balance: number }[] }) {
+  const cpfHoldings = holdings.filter((h) =>
+    ["OA", "SA", "MA"].includes(h.label ?? "")
+  );
+
+  if (cpfHoldings.length === 0) {
+    return (
+      <p className="text-muted-foreground text-center py-4">
+        No CPF balances set. Click &quot;Set Up CPF Balances&quot; to add your balances.
+      </p>
+    );
+  }
+
+  const total = cpfHoldings.reduce((sum, h) => sum + Number(h.balance), 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3">
+        {CPF_SUB_ACCOUNTS.map(({ value, label }) => {
+          const holding = cpfHoldings.find((h) => h.label === value);
+          const balance = holding ? Number(holding.balance) : 0;
+          return (
+            <div
+              key={value}
+              className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+            >
+              <div>
+                <p className="font-medium">{label}</p>
+                <p className="text-sm text-muted-foreground">{value}</p>
+              </div>
+              <p className="text-lg font-semibold">
+                {formatCurrency(balance, "SGD")}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between pt-3 border-t">
+        <p className="font-medium">Total CPF</p>
+        <p className="text-xl font-bold">{formatCurrency(total, "SGD")}</p>
+      </div>
     </div>
   );
 }

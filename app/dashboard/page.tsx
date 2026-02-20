@@ -8,7 +8,8 @@ import {
   calculateInvestmentCost,
 } from "@/lib/calculations";
 import { saveSnapshot, getUserPreferences } from "@/lib/actions";
-import { getExchangeRates } from "@/lib/exchange-rates";
+import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
+import type { ExchangeRates } from "@/lib/exchange-rates";
 import { SummaryCards } from "@/components/summary-cards";
 import { BaseCurrencySelector } from "@/components/base-currency-selector";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
@@ -50,7 +51,7 @@ export default async function DashboardPage() {
     cash_holdings: CashHolding[];
     stock_holdings: StockHolding[];
   })[];
-  const snapshots = snapshotsRes.data ?? [];
+  const snapshotsRaw = snapshotsRes.data ?? [];
   const currentMonthExpenses = (expensesRes.data ?? []) as Expense[];
   const baseCurrency = preferences.base_currency;
 
@@ -62,9 +63,24 @@ export default async function DashboardPage() {
   const tickers = allStockHoldings.map((h) => h.ticker);
   const prices = tickers.length > 0 ? await getStockPrices(tickers) : {};
 
+  // Separate accounts by type
+  const cashAccounts = accounts.filter((a) => a.type === "cash");
+  const investmentAccounts = accounts.filter((a) => a.type === "investment");
+  const cpfAccounts = accounts.filter((a) => a.type === "cpf");
+  const srsAccounts = accounts.filter((a) => a.type === "srs");
+
   // Calculate totals with currency conversion
-  const allCashHoldings = accounts.flatMap((a) => a.cash_holdings);
-  const cashTotal = calculateCashTotal(allCashHoldings, baseCurrency, exchangeRates);
+  // Cash total (only from cash-type accounts)
+  const cashOnlyHoldings = cashAccounts.flatMap((a) => a.cash_holdings);
+  const cashTotal = calculateCashTotal(cashOnlyHoldings, baseCurrency, exchangeRates);
+
+  // CPF total
+  const cpfHoldings = cpfAccounts.flatMap((a) => a.cash_holdings);
+  const cpfTotal = calculateCashTotal(cpfHoldings, baseCurrency, exchangeRates);
+
+  // SRS total
+  const srsHoldings = srsAccounts.flatMap((a) => a.cash_holdings);
+  const srsTotal = calculateCashTotal(srsHoldings, baseCurrency, exchangeRates);
 
   // Stock prices are in USD, convert to base currency if needed
   let investmentValue = calculateInvestmentValue(allStockHoldings, prices);
@@ -79,18 +95,65 @@ export default async function DashboardPage() {
     }
   }
 
-  const totalNetWorth = cashTotal + investmentValue;
+  const totalNetWorth = cashTotal + investmentValue + cpfTotal + srsTotal;
   const totalGainLoss = investmentValue - investmentCost;
   const gainLossPercent =
     investmentCost > 0 ? (totalGainLoss / investmentCost) * 100 : 0;
 
   // Save today's snapshot (always in current base currency value)
+  const today = new Date().toISOString().split("T")[0];
   if (accounts.length > 0) {
     try {
-      await saveSnapshot(totalNetWorth, cashTotal, investmentValue);
+      await saveSnapshot(totalNetWorth, cashTotal, investmentValue, baseCurrency);
     } catch {
       // Snapshot save is best-effort
     }
+  }
+
+  // Convert historical snapshots to current base currency
+  // and update today's snapshot with current calculated values
+  const snapshots = snapshotsRaw.map((s) => {
+    if (s.snapshot_date === today) {
+      // Use current calculated values for today
+      return {
+        ...s,
+        total_value: totalNetWorth,
+        cash_value: cashTotal,
+        investment_value: investmentValue,
+        currency: baseCurrency,
+      };
+    }
+
+    // Convert historical snapshots to current base currency
+    const snapshotCurrency = s.currency || "USD";
+    if (snapshotCurrency !== baseCurrency) {
+      const rate = exchangeRates[snapshotCurrency];
+      if (rate && rate > 0) {
+        return {
+          ...s,
+          total_value: Number(s.total_value) / rate,
+          cash_value: Number(s.cash_value) / rate,
+          investment_value: Number(s.investment_value) / rate,
+          currency: baseCurrency,
+        };
+      }
+    }
+    return s;
+  });
+
+  // If today's snapshot doesn't exist in the fetched data, add it
+  const hasTodaySnapshot = snapshotsRaw.some((s) => s.snapshot_date === today);
+  if (!hasTodaySnapshot && accounts.length > 0) {
+    snapshots.push({
+      id: "current",
+      user_id: "",
+      total_value: totalNetWorth,
+      cash_value: cashTotal,
+      investment_value: investmentValue,
+      snapshot_date: today,
+      currency: baseCurrency,
+      created_at: new Date().toISOString(),
+    });
   }
 
   return (
@@ -107,17 +170,24 @@ export default async function DashboardPage() {
         totalNetWorth={totalNetWorth}
         cashTotal={cashTotal}
         investmentValue={investmentValue}
+        cpfSrsTotal={cpfTotal + srsTotal}
         totalGainLoss={totalGainLoss}
-        gainLossPercent={gainLossPercent}
         baseCurrency={baseCurrency}
       />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <NetWorthChart snapshots={snapshots} />
-        <AllocationChart cashTotal={cashTotal} investmentValue={investmentValue} />
+        <NetWorthChart snapshots={snapshots} baseCurrency={baseCurrency} />
+        <AllocationChart
+          cashTotal={cashTotal}
+          investmentValue={investmentValue}
+          cpfTotal={cpfTotal}
+          srsTotal={srsTotal}
+          baseCurrency={baseCurrency}
+        />
         <ExpenseBreakdownChart
           expenses={currentMonthExpenses}
           title="This Month's Expenses"
+          baseCurrency={baseCurrency}
         />
       </div>
 

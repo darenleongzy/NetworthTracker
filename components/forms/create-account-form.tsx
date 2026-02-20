@@ -78,6 +78,8 @@ export function CreateAccountForm() {
               <SelectContent>
                 <SelectItem value="cash">Cash</SelectItem>
                 <SelectItem value="investment">Investment</SelectItem>
+                <SelectItem value="cpf">CPF</SelectItem>
+                <SelectItem value="srs">SRS</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -1,4 +1,4 @@
-export type AccountType = "cash" | "investment";
+export type AccountType = "cash" | "investment" | "cpf" | "srs";
 
 export interface Account {
   id: string;
@@ -14,8 +14,17 @@ export interface CashHolding {
   account_id: string;
   balance: number;
   currency: string;
+  label?: string | null;
   updated_at: string;
 }
+
+export type CpfSubAccount = "OA" | "SA" | "MA";
+
+export const CPF_SUB_ACCOUNTS: { value: CpfSubAccount; label: string }[] = [
+  { value: "OA", label: "Ordinary Account" },
+  { value: "SA", label: "Special Account" },
+  { value: "MA", label: "Medisave Account" },
+];
 
 export interface StockHolding {
   id: string;
@@ -39,6 +48,7 @@ export interface NetWorthSnapshot {
   cash_value: number;
   investment_value: number;
   snapshot_date: string;
+  currency: string;
   created_at: string;
 }
 
