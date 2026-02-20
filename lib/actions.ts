@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { refreshStockPriceIfStale } from "@/lib/stock-api";
-import type { AccountType, ExpenseCategory, ExpenseSubcategory } from "@/lib/types";
+import type { AccountType, ExpenseCategory, ExpenseSubcategory, FireSettings } from "@/lib/types";
+import { DEFAULT_FIRE_SETTINGS } from "@/lib/types";
 
 // ── Accounts ──
 
@@ -216,6 +217,53 @@ export async function updateBaseCurrency(baseCurrency: string) {
 
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard");
+}
+
+// ── FIRE Settings ──
+
+export async function getFireSettings(): Promise<FireSettings> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("user_preferences")
+    .select(
+      "fire_current_age, fire_swr, fire_growth_rate, fire_inflation_rate, fire_include_cpf_srs, fire_expense_mode, fire_manual_expenses, fire_savings_mode, fire_manual_savings"
+    )
+    .eq("user_id", user.id)
+    .single();
+
+  if (error && error.code !== "PGRST116") {
+    throw new Error(error.message);
+  }
+
+  // Return defaults merged with any existing data
+  return {
+    ...DEFAULT_FIRE_SETTINGS,
+    ...data,
+  };
+}
+
+export async function updateFireSettings(settings: Partial<FireSettings>) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error } = await supabase.from("user_preferences").upsert(
+    {
+      user_id: user.id,
+      ...settings,
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (error) throw new Error(error.message);
+  // Don't revalidate - these are user inputs that don't affect other data
 }
 
 // ── Snapshots ──

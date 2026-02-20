@@ -6,7 +6,7 @@ import {
   calculateCashTotal,
   calculateInvestmentValue,
 } from "@/lib/calculations";
-import { getUserPreferences } from "@/lib/actions";
+import { getUserPreferences, getFireSettings } from "@/lib/actions";
 import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
 import { FireCalculator } from "@/components/fire-calculator";
 import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
@@ -20,7 +20,7 @@ export default async function FirePage() {
   const threeMonthsAgoStr = threeMonthsAgo.toISOString().split("T")[0];
 
   // Fetch all user data in parallel
-  const [accountsRes, expensesRes, preferences] = await Promise.all([
+  const [accountsRes, expensesRes, preferences, fireSettings] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
@@ -31,6 +31,7 @@ export default async function FirePage() {
       .gte("expense_date", threeMonthsAgoStr)
       .order("expense_date", { ascending: false }),
     getUserPreferences(),
+    getFireSettings(),
   ]);
 
   const accounts = (accountsRes.data ?? []) as (Account & {
@@ -108,6 +109,7 @@ export default async function FirePage() {
         netWorthWithoutCpfSrs={netWorthWithoutCpfSrs}
         averageMonthlyExpenses={averageMonthlyExpenses}
         baseCurrency={baseCurrency}
+        initialSettings={fireSettings}
       />
     </div>
   );
