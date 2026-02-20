@@ -123,16 +123,19 @@ export default async function DashboardPage() {
     // Convert historical snapshots to current base currency
     const snapshotCurrency = s.currency || "USD";
     if (snapshotCurrency !== baseCurrency) {
-      const rate = exchangeRates[snapshotCurrency];
-      if (rate && rate > 0) {
-        return {
-          ...s,
-          total_value: Number(s.total_value) / rate,
-          cash_value: Number(s.cash_value) / rate,
-          investment_value: Number(s.investment_value) / rate,
-          currency: baseCurrency,
-        };
-      }
+      return {
+        ...s,
+        total_value: convertToBaseCurrency(
+          Number(s.total_value), snapshotCurrency, baseCurrency, exchangeRates
+        ),
+        cash_value: convertToBaseCurrency(
+          Number(s.cash_value), snapshotCurrency, baseCurrency, exchangeRates
+        ),
+        investment_value: convertToBaseCurrency(
+          Number(s.investment_value), snapshotCurrency, baseCurrency, exchangeRates
+        ),
+        currency: baseCurrency,
+      };
     }
     return s;
   });

@@ -29,25 +29,42 @@ function getLast7Days(snapshots: NetWorthSnapshot[]) {
   }
 
   // Get today and 6 days ago (7 days total)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Use UTC to match server snapshot dates (which use UTC)
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 6);
+  startDate.setUTCDate(startDate.getUTCDate() - 6);
 
-  // Find the most recent snapshot before or on startDate to initialize lastValue
-  let lastValue = { total: 0, cash: 0, investments: 0 };
+  // Sort snapshots by date
   const sortedSnapshots = [...snapshots].sort(
     (a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
   );
+
+  // Find the most recent snapshot before or on startDate to initialize lastValue
+  // If no such snapshot exists, use the first available snapshot
+  let lastValue = { total: 0, cash: 0, investments: 0 };
+  let foundInitial = false;
+
   for (const s of sortedSnapshots) {
-    const snapshotDate = new Date(s.snapshot_date);
+    const snapshotDate = new Date(s.snapshot_date + "T00:00:00Z");
     if (snapshotDate <= startDate) {
       lastValue = {
         total: Number(s.total_value),
         cash: Number(s.cash_value),
         investments: Number(s.investment_value),
       };
+      foundInitial = true;
     }
+  }
+
+  // If no snapshot before startDate, use the first available snapshot
+  if (!foundInitial && sortedSnapshots.length > 0) {
+    const first = sortedSnapshots[0];
+    lastValue = {
+      total: Number(first.total_value),
+      cash: Number(first.cash_value),
+      investments: Number(first.investment_value),
+    };
   }
 
   // Fill in all 7 days
@@ -74,7 +91,7 @@ function getLast7Days(snapshots: NetWorthSnapshot[]) {
       ...lastValue,
     });
 
-    currentDate.setDate(currentDate.getDate() + 1);
+    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
   }
 
   return result;
@@ -85,8 +102,9 @@ function getLast12Months(snapshots: NetWorthSnapshot[]) {
   const monthlyMap = new Map<string, { total: number; cash: number; investments: number }>();
 
   for (const s of snapshots) {
-    const d = new Date(s.snapshot_date);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    // Parse as UTC to match server snapshot dates
+    const d = new Date(s.snapshot_date + "T00:00:00Z");
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     // Always use the latest snapshot for each month
     monthlyMap.set(key, {
       total: Number(s.total_value),
@@ -96,30 +114,44 @@ function getLast12Months(snapshots: NetWorthSnapshot[]) {
   }
 
   // Generate last 12 months
-  const today = new Date();
+  // Use UTC to match server snapshot dates
+  const now = new Date();
   const result: { date: string; total: number; cash: number; investments: number }[] = [];
   let lastValue = { total: 0, cash: 0, investments: 0 };
 
   // Find earliest value to initialize
   const sortedSnapshots = [...snapshots].sort(
-    (a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
+    (a, b) => new Date(a.snapshot_date + "T00:00:00Z").getTime() - new Date(b.snapshot_date + "T00:00:00Z").getTime()
   );
 
-  const startMonth = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+  const startMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+  let foundInitial = false;
+
   for (const s of sortedSnapshots) {
-    const snapshotDate = new Date(s.snapshot_date);
+    const snapshotDate = new Date(s.snapshot_date + "T00:00:00Z");
     if (snapshotDate < startMonth) {
       lastValue = {
         total: Number(s.total_value),
         cash: Number(s.cash_value),
         investments: Number(s.investment_value),
       };
+      foundInitial = true;
     }
   }
 
+  // If no snapshot before start month, use the first available snapshot
+  if (!foundInitial && sortedSnapshots.length > 0) {
+    const first = sortedSnapshots[0];
+    lastValue = {
+      total: Number(first.total_value),
+      cash: Number(first.cash_value),
+      investments: Number(first.investment_value),
+    };
+  }
+
   for (let i = 11; i >= 0; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 
     const monthData = monthlyMap.get(key);
     if (monthData) {
@@ -140,8 +172,9 @@ function getLast5Years(snapshots: NetWorthSnapshot[]) {
   const yearlyMap = new Map<string, { total: number; cash: number; investments: number }>();
 
   for (const s of snapshots) {
-    const d = new Date(s.snapshot_date);
-    const key = `${d.getFullYear()}`;
+    // Parse as UTC to match server snapshot dates
+    const d = new Date(s.snapshot_date + "T00:00:00Z");
+    const key = `${d.getUTCFullYear()}`;
     // Always use the latest snapshot for each year
     yearlyMap.set(key, {
       total: Number(s.total_value),
@@ -151,26 +184,40 @@ function getLast5Years(snapshots: NetWorthSnapshot[]) {
   }
 
   // Generate last 5 years
-  const today = new Date();
-  const currentYear = today.getFullYear();
+  // Use UTC to match server snapshot dates
+  const now = new Date();
+  const currentYear = now.getUTCFullYear();
   const result: { date: string; total: number; cash: number; investments: number }[] = [];
   let lastValue = { total: 0, cash: 0, investments: 0 };
 
   // Find earliest value to initialize
   const sortedSnapshots = [...snapshots].sort(
-    (a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
+    (a, b) => new Date(a.snapshot_date + "T00:00:00Z").getTime() - new Date(b.snapshot_date + "T00:00:00Z").getTime()
   );
 
   const startYear = currentYear - 4;
+  let foundInitial = false;
+
   for (const s of sortedSnapshots) {
-    const snapshotYear = new Date(s.snapshot_date).getFullYear();
+    const snapshotYear = new Date(s.snapshot_date + "T00:00:00Z").getUTCFullYear();
     if (snapshotYear < startYear) {
       lastValue = {
         total: Number(s.total_value),
         cash: Number(s.cash_value),
         investments: Number(s.investment_value),
       };
+      foundInitial = true;
     }
+  }
+
+  // If no snapshot before start year, use the first available snapshot
+  if (!foundInitial && sortedSnapshots.length > 0) {
+    const first = sortedSnapshots[0];
+    lastValue = {
+      total: Number(first.total_value),
+      cash: Number(first.cash_value),
+      investments: Number(first.investment_value),
+    };
   }
 
   for (let i = 4; i >= 0; i--) {
@@ -254,13 +301,14 @@ export function NetWorthChart({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={data}>
+          <AreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey="date"
               className="text-xs"
               interval={0}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 10 }}
+              tickMargin={5}
             />
             <YAxis
               className="text-xs"

@@ -117,3 +117,28 @@ export interface Expense {
   created_at: string;
   updated_at: string;
 }
+
+// FIRE Calculator Settings
+export interface FireSettings {
+  fire_current_age: number;
+  fire_swr: number;
+  fire_growth_rate: number;
+  fire_inflation_rate: number;
+  fire_include_cpf_srs: boolean;
+  fire_expense_mode: "tracked" | "manual";
+  fire_manual_expenses: number;
+  fire_savings_mode: "auto" | "manual";
+  fire_manual_savings: number;
+}
+
+export const DEFAULT_FIRE_SETTINGS: FireSettings = {
+  fire_current_age: 35,
+  fire_swr: 4,
+  fire_growth_rate: 7,
+  fire_inflation_rate: 3,
+  fire_include_cpf_srs: false,
+  fire_expense_mode: "tracked",
+  fire_manual_expenses: 0,
+  fire_savings_mode: "manual",
+  fire_manual_savings: 0,
+};

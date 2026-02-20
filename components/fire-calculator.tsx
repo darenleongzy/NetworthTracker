@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import {
   generateProjection,
 } from "@/lib/fire-calculations";
 import { getCurrencySymbol } from "@/lib/currencies";
+import { updateFireSettings } from "@/lib/actions";
+import type { FireSettings } from "@/lib/types";
 import { Flame, Target, TrendingUp, Clock, Calendar, Wallet } from "lucide-react";
 
 interface FireCalculatorProps {
@@ -21,6 +23,7 @@ interface FireCalculatorProps {
   netWorthWithoutCpfSrs: number;
   averageMonthlyExpenses: number;
   baseCurrency: string;
+  initialSettings: FireSettings;
 }
 
 function formatWholeNumber(value: number, currencyCode: string = "USD"): string {
@@ -43,23 +46,74 @@ export function FireCalculator({
   netWorthWithoutCpfSrs,
   averageMonthlyExpenses,
   baseCurrency,
+  initialSettings,
 }: FireCalculatorProps) {
   const currencySymbol = getCurrencySymbol(baseCurrency);
 
-  // Settings state
-  const [currentAge, setCurrentAge] = useState(35);
-  const [swr, setSwr] = useState(4);
-  const [growthRate, setGrowthRate] = useState(7);
-  const [inflationRate, setInflationRate] = useState(3);
-  const [includeCpfSrs, setIncludeCpfSrs] = useState(false);
+  // Settings state - initialized from database
+  const [currentAge, setCurrentAge] = useState(initialSettings.fire_current_age);
+  const [swr, setSwr] = useState(initialSettings.fire_swr);
+  const [growthRate, setGrowthRate] = useState(initialSettings.fire_growth_rate);
+  const [inflationRate, setInflationRate] = useState(initialSettings.fire_inflation_rate);
+  const [includeCpfSrs, setIncludeCpfSrs] = useState(initialSettings.fire_include_cpf_srs);
 
   // Expenses state
-  const [expenseMode, setExpenseMode] = useState<"tracked" | "manual">("tracked");
-  const [manualExpenses, setManualExpenses] = useState("");
+  const [expenseMode, setExpenseMode] = useState<"tracked" | "manual">(
+    initialSettings.fire_expense_mode
+  );
+  const [manualExpenses, setManualExpenses] = useState(
+    initialSettings.fire_manual_expenses > 0 ? String(initialSettings.fire_manual_expenses) : ""
+  );
 
   // Savings state
-  const [savingsMode, setSavingsMode] = useState<"auto" | "manual">("manual");
-  const [manualSavings, setManualSavings] = useState("");
+  const [savingsMode, setSavingsMode] = useState<"auto" | "manual">(
+    initialSettings.fire_savings_mode
+  );
+  const [manualSavings, setManualSavings] = useState(
+    initialSettings.fire_manual_savings > 0 ? String(initialSettings.fire_manual_savings) : ""
+  );
+
+  // Debounce timer ref for saving
+  const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Save settings to database when they change (debounced)
+  useEffect(() => {
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce the save to avoid too many database calls
+    saveTimeoutRef.current = setTimeout(() => {
+      updateFireSettings({
+        fire_current_age: currentAge,
+        fire_swr: swr,
+        fire_growth_rate: growthRate,
+        fire_inflation_rate: inflationRate,
+        fire_include_cpf_srs: includeCpfSrs,
+        fire_expense_mode: expenseMode,
+        fire_manual_expenses: parseFloat(manualExpenses) || 0,
+        fire_savings_mode: savingsMode,
+        fire_manual_savings: parseFloat(manualSavings) || 0,
+      }).catch(console.error);
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [
+    currentAge,
+    swr,
+    growthRate,
+    inflationRate,
+    includeCpfSrs,
+    expenseMode,
+    manualExpenses,
+    savingsMode,
+    manualSavings,
+  ]);
 
   // Calculate values
   const currentNetWorth = includeCpfSrs
