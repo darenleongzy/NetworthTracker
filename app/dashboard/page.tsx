@@ -82,18 +82,14 @@ export default async function DashboardPage() {
   const srsHoldings = srsAccounts.flatMap((a) => a.cash_holdings);
   const srsTotal = calculateCashTotal(srsHoldings, baseCurrency, exchangeRates);
 
-  // Stock prices are in USD, convert to base currency if needed
-  let investmentValue = calculateInvestmentValue(allStockHoldings, prices);
-  let investmentCost = calculateInvestmentCost(allStockHoldings);
-
-  // Convert USD investment values to base currency
-  if (baseCurrency !== "USD") {
-    const usdRate = exchangeRates["USD"];
-    if (usdRate && usdRate > 0) {
-      investmentValue = investmentValue / usdRate;
-      investmentCost = investmentCost / usdRate;
-    }
-  }
+  // Stock prices include their native currency, convert to base currency
+  const investmentValue = calculateInvestmentValue(
+    allStockHoldings,
+    prices,
+    baseCurrency,
+    exchangeRates
+  );
+  const investmentCost = calculateInvestmentCost(allStockHoldings);
 
   const totalNetWorth = cashTotal + investmentValue + cpfTotal + srsTotal;
   const totalGainLoss = investmentValue - investmentCost;

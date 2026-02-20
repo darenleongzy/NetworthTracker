@@ -84,6 +84,9 @@ export function StockHoldingForm({
               placeholder="AAPL"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              US stocks: AAPL, MSFT | LSE: VWRA.L, HSBC.L | SGX: D05.SI, O39.SI
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="shares">Number of Shares</Label>

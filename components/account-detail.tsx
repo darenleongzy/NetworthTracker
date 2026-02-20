@@ -22,6 +22,7 @@ import { CPF_SUB_ACCOUNTS } from "@/lib/types";
 import { ArrowLeft, Check, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import type { ExchangeRates } from "@/lib/exchange-rates";
+import type { StockPriceData } from "@/lib/stock-api";
 import type { AccountWithHoldings } from "@/lib/types";
 
 export function AccountDetail({
@@ -33,7 +34,7 @@ export function AccountDetail({
   account: AccountWithHoldings;
   baseCurrency?: string;
   exchangeRates?: ExchangeRates;
-  stockPrices?: Record<string, number>;
+  stockPrices?: Record<string, StockPriceData>;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(account.name);
@@ -57,18 +58,20 @@ export function AccountDetail({
       }
     }
 
-    // Sum stock holdings (prices are in USD, convert to base)
+    // Sum stock holdings (prices are in their native currency, convert to base)
     for (const h of account.stock_holdings) {
-      const price = stockPrices[h.ticker.toUpperCase()] ?? 0;
-      const valueUSD = Number(h.shares) * price;
-      if (baseCurrency === "USD") {
-        total += valueUSD;
+      const priceData = stockPrices[h.ticker.toUpperCase()];
+      const price = priceData?.price ?? 0;
+      const priceCurrency = priceData?.currency ?? "USD";
+      const valueNative = Number(h.shares) * price;
+      if (priceCurrency === baseCurrency) {
+        total += valueNative;
       } else {
-        const usdRate = exchangeRates["USD"];
-        if (usdRate && usdRate > 0) {
-          total += valueUSD / usdRate;
+        const rate = exchangeRates[priceCurrency];
+        if (rate && rate > 0) {
+          total += valueNative / rate;
         } else {
-          total += valueUSD;
+          total += valueNative;
         }
       }
     }
@@ -165,7 +168,7 @@ export function AccountDetail({
             <div>
               <CardTitle>Stock Holdings</CardTitle>
               <CardDescription>
-                Stock values shown in USD
+                Stock values shown in native currency
               </CardDescription>
             </div>
             <StockHoldingForm accountId={account.id} />
@@ -175,6 +178,8 @@ export function AccountDetail({
               holdings={account.stock_holdings}
               accountId={account.id}
               stockPrices={stockPrices}
+              baseCurrency={baseCurrency}
+              exchangeRates={exchangeRates}
             />
           </CardContent>
         </Card>

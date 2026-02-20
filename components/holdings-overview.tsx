@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/calculations";
 import { useTableSort } from "@/lib/hooks/use-table-sort";
 import type { ExchangeRates } from "@/lib/exchange-rates";
+import type { StockPriceData } from "@/lib/stock-api";
 import type { Account, CashHolding, StockHolding } from "@/lib/types";
 
 type AccountWithHoldings = Account & {
@@ -46,7 +47,7 @@ export function HoldingsOverview({
   exchangeRates = {},
 }: {
   accounts: AccountWithHoldings[];
-  prices: Record<string, number>;
+  prices: Record<string, StockPriceData>;
   baseCurrency?: string;
   exchangeRates?: ExchangeRates;
 }) {
@@ -78,18 +79,20 @@ export function HoldingsOverview({
         });
       }
       for (const h of account.stock_holdings) {
-        const price = prices[h.ticker.toUpperCase()] ?? 0;
-        const costValueUSD = Number(h.shares) * Number(h.cost_basis_per_share);
-        const currentValueUSD = price > 0 ? Number(h.shares) * price : costValueUSD;
-        const currentValue = convertToBase(currentValueUSD, "USD");
-        const costValue = convertToBase(costValueUSD, "USD");
+        const priceData = prices[h.ticker.toUpperCase()];
+        const price = priceData?.price ?? 0;
+        const priceCurrency = priceData?.currency ?? "USD";
+        const costValueNative = Number(h.shares) * Number(h.cost_basis_per_share);
+        const currentValueNative = price > 0 ? Number(h.shares) * price : costValueNative;
+        const currentValue = convertToBase(currentValueNative, priceCurrency);
+        const costValue = convertToBase(costValueNative, priceCurrency);
         result.push({
           accountName: account.name,
           accountId: account.id,
           type: "stock",
           label: `${h.ticker} (${h.shares} shares)`,
-          originalCurrency: "USD",
-          originalValue: costValueUSD,
+          originalCurrency: priceCurrency,
+          originalValue: costValueNative,
           convertedValue: currentValue,
           gainLoss: price > 0 ? currentValue - costValue : null,
         });

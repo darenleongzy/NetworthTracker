@@ -20,6 +20,8 @@ export const EXPENSE_SUBCATEGORIES: {
   { value: "childcare", label: "Childcare", category: "recurring" },
   { value: "phone_internet", label: "Phone/Internet", category: "recurring" },
   { value: "family", label: "Family", category: "recurring" },
+  { value: "tax", label: "Tax", category: "recurring" },
+  { value: "car", label: "Car", category: "recurring" },
   // Non-Recurring
   { value: "shopping", label: "Shopping", category: "non_recurring" },
   { value: "food_dining", label: "Food & Dining", category: "non_recurring" },
@@ -32,6 +34,8 @@ export const EXPENSE_SUBCATEGORIES: {
   { value: "gifts", label: "Gifts", category: "non_recurring" },
   { value: "home_maintenance", label: "Home Maintenance", category: "non_recurring" },
   { value: "personal_care", label: "Personal Care", category: "non_recurring" },
+  { value: "tax", label: "Tax", category: "non_recurring" },
+  { value: "car", label: "Car", category: "non_recurring" },
   { value: "other", label: "Other", category: "non_recurring" },
 ];
 
@@ -46,6 +50,8 @@ export const EXPENSE_COLORS: Record<ExpenseSubcategory, string> = {
   childcare: "#f43f5e",
   phone_internet: "#0ea5e9",
   family: "#7c3aed",
+  tax: "#dc2626",
+  car: "#059669",
   // Non-Recurring - greens, oranges, etc.
   shopping: "#22c55e",
   food_dining: "#84cc16",

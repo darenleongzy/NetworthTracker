@@ -15,11 +15,14 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { StockHoldingForm } from "@/components/forms/stock-holding-form";
 import { Trash2 } from "lucide-react";
 import type { StockHolding } from "@/lib/types";
+import type { ExchangeRates } from "@/lib/exchange-rates";
+import type { StockPriceData } from "@/lib/stock-api";
 import { formatCurrency } from "@/lib/calculations";
 import { useTableSort } from "@/lib/hooks/use-table-sort";
 
 type StockHoldingWithComputed = StockHolding & {
   price: number;
+  currency: string;
   marketValue: number;
   costBasis: number;
   gainLoss: number;
@@ -29,19 +32,25 @@ export function StockHoldingsTable({
   holdings,
   accountId,
   stockPrices = {},
+  baseCurrency = "USD",
+  exchangeRates = {},
 }: {
   holdings: StockHolding[];
   accountId: string;
-  stockPrices?: Record<string, number>;
+  stockPrices?: Record<string, StockPriceData>;
+  baseCurrency?: string;
+  exchangeRates?: ExchangeRates;
 }) {
   // Compute derived values for sorting
   const holdingsWithComputed = useMemo<StockHoldingWithComputed[]>(() => {
     return holdings.map((h) => {
-      const price = stockPrices[h.ticker.toUpperCase()] ?? 0;
+      const priceData = stockPrices[h.ticker.toUpperCase()];
+      const price = priceData?.price ?? 0;
+      const currency = priceData?.currency ?? "USD";
       const marketValue = Number(h.shares) * price;
       const costBasis = Number(h.shares) * Number(h.cost_basis_per_share);
       const gainLoss = marketValue - costBasis;
-      return { ...h, price, marketValue, costBasis, gainLoss };
+      return { ...h, price, currency, marketValue, costBasis, gainLoss };
     });
   }, [holdings, stockPrices]);
 
@@ -70,7 +79,7 @@ export function StockHoldingsTable({
             className="text-right"
           />
           <SortableHeader
-            label="Price (USD)"
+            label="Price"
             sortKey="price"
             currentSortKey={sortConfig.key as string | null}
             direction={sortConfig.direction}
@@ -78,7 +87,7 @@ export function StockHoldingsTable({
             className="text-right"
           />
           <SortableHeader
-            label="Market Value (USD)"
+            label="Market Value"
             sortKey="marketValue"
             currentSortKey={sortConfig.key as string | null}
             direction={sortConfig.direction}
@@ -86,7 +95,7 @@ export function StockHoldingsTable({
             className="text-right"
           />
           <SortableHeader
-            label="Cost Basis (USD)"
+            label="Cost Basis"
             sortKey="costBasis"
             currentSortKey={sortConfig.key as string | null}
             direction={sortConfig.direction}
@@ -94,7 +103,7 @@ export function StockHoldingsTable({
             className="text-right"
           />
           <SortableHeader
-            label="Gain/Loss (USD)"
+            label="Gain/Loss"
             sortKey="gainLoss"
             currentSortKey={sortConfig.key as string | null}
             direction={sortConfig.direction}
@@ -110,18 +119,18 @@ export function StockHoldingsTable({
             <TableCell className="font-medium">{h.ticker}</TableCell>
             <TableCell className="text-right">{h.shares}</TableCell>
             <TableCell className="text-right">
-              {formatCurrency(h.price, "USD")}
+              {formatCurrency(h.price, h.currency)}
             </TableCell>
             <TableCell className="text-right">
-              {formatCurrency(h.marketValue, "USD")}
+              {formatCurrency(h.marketValue, h.currency)}
             </TableCell>
             <TableCell className="text-right text-muted-foreground">
-              {formatCurrency(h.costBasis, "USD")}
+              {formatCurrency(h.costBasis, h.currency)}
             </TableCell>
             <TableCell className="text-right">
               <span className={h.gainLoss >= 0 ? "text-green-600" : "text-red-600"}>
                 {h.gainLoss >= 0 ? "+" : ""}
-                {formatCurrency(h.gainLoss, "USD")}
+                {formatCurrency(h.gainLoss, h.currency)}
               </span>
             </TableCell>
             <TableCell className="text-right">
