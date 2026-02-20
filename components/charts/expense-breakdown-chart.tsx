@@ -116,7 +116,7 @@ export function ExpenseBreakdownChart({
                 verticalAlign="bottom"
                 align="center"
                 iconType="circle"
-                wrapperStyle={{ paddingTop: 8 }}
+                wrapperStyle={{ paddingTop: 8, fontSize: 12 }}
               />
             </PieChart>
           </ResponsiveContainer>

@@ -66,8 +66,9 @@ export function StockHoldingsTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
         <TableRow>
           <TableHead>Ticker</TableHead>
           <SortableHeader
@@ -151,7 +152,8 @@ export function StockHoldingsTable({
             </TableCell>
           </TableRow>
         ))}
-      </TableBody>
-    </Table>
+        </TableBody>
+      </Table>
+    </div>
   );
 }

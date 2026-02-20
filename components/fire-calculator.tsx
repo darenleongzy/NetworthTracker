@@ -224,26 +224,30 @@ export function FireCalculator({
                 <span className="text-muted-foreground">(avg last 3 months)</span>
               </Label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="manual" id="manual" />
-              <Label htmlFor="manual" className="font-normal cursor-pointer">
-                Manual input:
-              </Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {currencySymbol}
-                </span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={manualExpenses}
-                  onChange={(e) => setManualExpenses(e.target.value)}
-                  onFocus={() => setExpenseMode("manual")}
-                  className="w-32 pl-8"
-                  placeholder="0"
-                />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="manual" id="manual" />
+                <Label htmlFor="manual" className="font-normal cursor-pointer">
+                  Manual input:
+                </Label>
               </div>
-              <span className="text-muted-foreground">/month</span>
+              <div className="flex items-center gap-2 ml-6 sm:ml-0">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {currencySymbol}
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={manualExpenses}
+                    onChange={(e) => setManualExpenses(e.target.value)}
+                    onFocus={() => setExpenseMode("manual")}
+                    className="w-32 pl-8"
+                    placeholder="0"
+                  />
+                </div>
+                <span className="text-muted-foreground">/month</span>
+              </div>
             </div>
           </RadioGroup>
         </CardContent>
@@ -259,26 +263,30 @@ export function FireCalculator({
             value={savingsMode}
             onValueChange={(v) => setSavingsMode(v as "auto" | "manual")}
           >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="manual" id="savings-manual" />
-              <Label htmlFor="savings-manual" className="font-normal cursor-pointer">
-                Manual input:
-              </Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {currencySymbol}
-                </span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={manualSavings}
-                  onChange={(e) => setManualSavings(e.target.value)}
-                  onFocus={() => setSavingsMode("manual")}
-                  className="w-32 pl-8"
-                  placeholder="0"
-                />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="manual" id="savings-manual" />
+                <Label htmlFor="savings-manual" className="font-normal cursor-pointer">
+                  Manual input:
+                </Label>
               </div>
-              <span className="text-muted-foreground">/month</span>
+              <div className="flex items-center gap-2 ml-6 sm:ml-0">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {currencySymbol}
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={manualSavings}
+                    onChange={(e) => setManualSavings(e.target.value)}
+                    onFocus={() => setSavingsMode("manual")}
+                    className="w-32 pl-8"
+                    placeholder="0"
+                  />
+                </div>
+                <span className="text-muted-foreground">/month</span>
+              </div>
             </div>
           </RadioGroup>
         </CardContent>

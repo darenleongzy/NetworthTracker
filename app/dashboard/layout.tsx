@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardNav userEmail={user.email ?? ""} />
-      <main className="flex-1 overflow-auto bg-background p-6 lg:p-8">{children}</main>
+      <main className="flex-1 overflow-auto bg-background p-6 pt-20 lg:p-8 lg:pt-8">{children}</main>
     </div>
   );
 }

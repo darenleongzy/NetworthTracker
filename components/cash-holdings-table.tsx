@@ -36,8 +36,9 @@ export function CashHoldingsTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
         <TableRow>
           <TableHead>Currency</TableHead>
           <SortableHeader
@@ -81,7 +82,8 @@ export function CashHoldingsTable({
             </TableCell>
           </TableRow>
         ))}
-      </TableBody>
-    </Table>
+        </TableBody>
+      </Table>
+    </div>
   );
 }

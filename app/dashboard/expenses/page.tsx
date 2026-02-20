@@ -40,7 +40,7 @@ export default async function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Expenses</h1>
           <p className="text-muted-foreground">
@@ -90,11 +90,13 @@ export default async function ExpensesPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <ExpenseBreakdownChart
-          expenses={currentMonthExpenses}
-          title="This Month's Breakdown"
-        />
-        <Card>
+        <div className="min-w-0">
+          <ExpenseBreakdownChart
+            expenses={currentMonthExpenses}
+            title="This Month's Breakdown"
+          />
+        </div>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader>
             <CardTitle>All Expenses</CardTitle>
           </CardHeader>

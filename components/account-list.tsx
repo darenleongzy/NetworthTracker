@@ -105,38 +105,40 @@ export function AccountList({
 
           return (
             <Card key={account.id}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle className="text-lg">{account.name}</CardTitle>
-                  <CardDescription>
-                    Created {new Date(account.created_at).toLocaleDateString("en-US")}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
+              <CardHeader className="pb-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{account.name}</CardTitle>
+                    <CardDescription>
+                      Created {new Date(account.created_at).toLocaleDateString("en-US")}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
                     <p className="text-lg font-semibold">
                       {formatCurrency(accountTotal, baseCurrency)}
                     </p>
+                    <Badge variant={account.type === "investment" ? "secondary" : "default"}>
+                      {account.type.toUpperCase()}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={async () => {
+                          if (confirm("Delete this account and all its holdings?")) {
+                            await deleteAccount(account.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                      <Link href={`/dashboard/accounts/${account.id}`}>
+                        <Button variant="ghost" size="icon">
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                  <Badge variant={account.type === "investment" ? "secondary" : "default"}>
-                    {account.type.toUpperCase()}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={async () => {
-                      if (confirm("Delete this account and all its holdings?")) {
-                        await deleteAccount(account.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                  <Link href={`/dashboard/accounts/${account.id}`}>
-                    <Button variant="ghost" size="icon">
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
                 </div>
               </CardHeader>
             </Card>

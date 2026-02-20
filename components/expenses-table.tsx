@@ -33,8 +33,9 @@ export function ExpensesTable({ expenses }: { expenses: Expense[] }) {
   }
 
   return (
-    <Table>
-      <TableHeader>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
         <TableRow>
           <SortableHeader
             label="Date"
@@ -89,7 +90,8 @@ export function ExpensesTable({ expenses }: { expenses: Expense[] }) {
             </TableCell>
           </TableRow>
         ))}
-      </TableBody>
-    </Table>
+        </TableBody>
+      </Table>
+    </div>
   );
 }

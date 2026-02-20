@@ -154,7 +154,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Your financial overview</p>
@@ -172,19 +172,25 @@ export default async function DashboardPage() {
       />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <NetWorthChart snapshots={snapshots} baseCurrency={baseCurrency} />
-        <AllocationChart
-          cashTotal={cashTotal}
-          investmentValue={investmentValue}
-          cpfTotal={cpfTotal}
-          srsTotal={srsTotal}
-          baseCurrency={baseCurrency}
-        />
-        <ExpenseBreakdownChart
-          expenses={currentMonthExpenses}
-          title="This Month's Expenses"
-          baseCurrency={baseCurrency}
-        />
+        <div className="min-w-0">
+          <NetWorthChart snapshots={snapshots} baseCurrency={baseCurrency} />
+        </div>
+        <div className="min-w-0">
+          <AllocationChart
+            cashTotal={cashTotal}
+            investmentValue={investmentValue}
+            cpfTotal={cpfTotal}
+            srsTotal={srsTotal}
+            baseCurrency={baseCurrency}
+          />
+        </div>
+        <div className="min-w-0">
+          <ExpenseBreakdownChart
+            expenses={currentMonthExpenses}
+            title="This Month's Expenses"
+            baseCurrency={baseCurrency}
+          />
+        </div>
       </div>
 
       {snapshots.length > 1 && (

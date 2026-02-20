@@ -125,13 +125,14 @@ export function HoldingsOverview({
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle>All Holdings</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
             <TableRow>
               <TableHead>Account</TableHead>
               <TableHead>Holding</TableHead>
@@ -203,8 +204,9 @@ export function HoldingsOverview({
                 </TableCell>
               </TableRow>
             ))}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

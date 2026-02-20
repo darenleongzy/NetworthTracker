@@ -90,14 +90,14 @@ export function AccountDetail({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/accounts">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {editing ? (
               <>
                 <Input
@@ -128,7 +128,7 @@ export function AccountDetail({
             </Badge>
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-left sm:text-right">
           <p className="text-sm text-muted-foreground">Account Total</p>
           <p className="text-2xl font-bold">
             {formatCurrency(accountTotal, baseCurrency)}
@@ -138,7 +138,7 @@ export function AccountDetail({
 
       {account.type === "cpf" ? (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>CPF Balances</CardTitle>
             <CpfHoldingsForm
               accountId={account.id}
@@ -151,7 +151,7 @@ export function AccountDetail({
         </Card>
       ) : account.type !== "investment" ? (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Cash Holdings</CardTitle>
             <CashHoldingForm accountId={account.id} />
           </CardHeader>
@@ -164,7 +164,7 @@ export function AccountDetail({
         </Card>
       ) : (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Stock Holdings</CardTitle>
               <CardDescription>
