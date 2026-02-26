@@ -43,5 +43,6 @@ next-env.d.ts
 # supabase
 supabase/.temp/
 
-# project notes (local only)
+# CLAUDE
 PROJECT_NOTES.md
+.claude/*
