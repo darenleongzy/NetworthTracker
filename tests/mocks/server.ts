@@ -1,5 +1,6 @@
 import { setupServer } from "msw/node";
-import { frankfurterHandlers } from "./handlers/frankfurter";
+import { frankfurterHandlers } from "./handlers/frankfurter"
+import { beforeAll, afterEach, afterAll } from "vitest";
 
 // Create MSW server with all handlers
 export const server = setupServer(...frankfurterHandlers);
