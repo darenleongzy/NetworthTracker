@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { deleteCashHolding } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,8 @@ import {
 } from "@/components/ui/table";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { CashHoldingForm } from "@/components/forms/cash-holding-form";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { CashHolding } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import { getCurrencyName } from "@/lib/currencies";
@@ -25,7 +27,21 @@ export function CashHoldingsTable({
   holdings: CashHolding[];
   accountId: string;
 }) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { sortedData, sortConfig, requestSort } = useTableSort(holdings);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this holding?")) return;
+    setDeletingId(id);
+    try {
+      await deleteCashHolding(id);
+      toast.success("Holding deleted");
+    } catch {
+      toast.error("Failed to delete holding");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   if (holdings.length === 0) {
     return (
@@ -70,13 +86,14 @@ export function CashHoldingsTable({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={async () => {
-                    if (confirm("Delete this holding?")) {
-                      await deleteCashHolding(h.id);
-                    }
-                  }}
+                  onClick={() => handleDelete(h.id)}
+                  disabled={deletingId === h.id}
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  {deletingId === h.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  )}
                 </Button>
               </div>
             </TableCell>

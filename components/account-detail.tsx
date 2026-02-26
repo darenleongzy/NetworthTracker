@@ -19,7 +19,8 @@ import { CpfHoldingsForm } from "@/components/forms/cpf-holdings-form";
 import { CashHoldingsTable } from "@/components/cash-holdings-table";
 import { StockHoldingsTable } from "@/components/stock-holdings-table";
 import { CPF_SUB_ACCOUNTS } from "@/lib/types";
-import { ArrowLeft, Check, Pencil } from "lucide-react";
+import { ArrowLeft, Check, Pencil, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { formatCurrency } from "@/lib/calculations";
 import type { ExchangeRates } from "@/lib/exchange-rates";
 import type { StockPriceData } from "@/lib/stock-api";
@@ -38,6 +39,7 @@ export function AccountDetail({
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(account.name);
+  const [renaming, setRenaming] = useState(false);
 
   // Calculate account total in base currency
   function calculateAccountTotal(): number {
@@ -83,7 +85,16 @@ export function AccountDetail({
 
   async function handleRename() {
     if (name.trim() && name !== account.name) {
-      await updateAccount(account.id, name.trim());
+      setRenaming(true);
+      try {
+        await updateAccount(account.id, name.trim());
+        toast.success("Account renamed");
+      } catch {
+        toast.error("Failed to rename account");
+        setName(account.name);
+      } finally {
+        setRenaming(false);
+      }
     }
     setEditing(false);
   }
@@ -105,10 +116,15 @@ export function AccountDetail({
                   onChange={(e) => setName(e.target.value)}
                   className="text-2xl font-bold h-auto py-0"
                   autoFocus
+                  disabled={renaming}
                   onKeyDown={(e) => e.key === "Enter" && handleRename()}
                 />
-                <Button variant="ghost" size="icon" onClick={handleRename}>
-                  <Check className="h-4 w-4" />
+                <Button variant="ghost" size="icon" onClick={handleRename} disabled={renaming}>
+                  {renaming ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
                 </Button>
               </>
             ) : (

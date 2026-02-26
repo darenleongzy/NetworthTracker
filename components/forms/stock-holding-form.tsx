@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import type { StockHolding } from "@/lib/types";
 
 export function StockHoldingForm({
@@ -47,8 +48,10 @@ export function StockHoldingForm({
         setShares("");
         setCostBasis("");
       }
+      toast.success(holding ? "Stock updated" : "Stock added");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to save stock holding");
     } finally {
       setLoading(false);
     }
@@ -112,8 +115,8 @@ export function StockHoldingForm({
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Saving..." : "Save"}
+          <Button type="submit" className="w-full" loading={loading}>
+            Save
           </Button>
         </form>
       </DialogContent>

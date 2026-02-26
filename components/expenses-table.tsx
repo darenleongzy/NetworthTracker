@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { deleteExpense } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,8 @@ import {
 } from "@/components/ui/table";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { ExpenseForm } from "@/components/forms/expense-form";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { Expense } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import {
@@ -22,7 +24,21 @@ import {
 import { useTableSort } from "@/lib/hooks/use-table-sort";
 
 export function ExpensesTable({ expenses }: { expenses: Expense[] }) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { sortedData, sortConfig, requestSort } = useTableSort(expenses);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this expense?")) return;
+    setDeletingId(id);
+    try {
+      await deleteExpense(id);
+      toast.success("Expense deleted");
+    } catch {
+      toast.error("Failed to delete expense");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   if (expenses.length === 0) {
     return (
@@ -78,13 +94,14 @@ export function ExpensesTable({ expenses }: { expenses: Expense[] }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={async () => {
-                    if (confirm("Delete this expense?")) {
-                      await deleteExpense(expense.id);
-                    }
-                  }}
+                  onClick={() => handleDelete(expense.id)}
+                  disabled={deletingId === expense.id}
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  {deletingId === expense.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  )}
                 </Button>
               </div>
             </TableCell>

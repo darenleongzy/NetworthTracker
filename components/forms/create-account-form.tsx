@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import type { AccountType } from "@/lib/types";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 export function CreateAccountForm() {
   const [open, setOpen] = useState(false);
@@ -36,8 +37,10 @@ export function CreateAccountForm() {
       setName("");
       setType("cash");
       setOpen(false);
+      toast.success("Account created");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -83,8 +86,8 @@ export function CreateAccountForm() {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating..." : "Create Account"}
+          <Button type="submit" className="w-full" loading={loading}>
+            Create Account
           </Button>
         </form>
       </DialogContent>

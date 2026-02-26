@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { deleteAccount } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, ChevronRight } from "lucide-react";
+import { Trash2, ChevronRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { formatCurrency } from "@/lib/calculations";
 import type { ExchangeRates } from "@/lib/exchange-rates";
 import type { StockPriceData } from "@/lib/stock-api";
@@ -28,6 +30,21 @@ export function AccountList({
   exchangeRates?: ExchangeRates;
   stockPrices?: Record<string, StockPriceData>;
 }) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this account and all its holdings?")) return;
+    setDeletingId(id);
+    try {
+      await deleteAccount(id);
+      toast.success("Account deleted");
+    } catch {
+      toast.error("Failed to delete account");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   // Calculate account total in base currency
   function calculateAccountTotal(account: AccountWithHoldings): number {
     let total = 0;
@@ -124,13 +141,14 @@ export function AccountList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={async () => {
-                          if (confirm("Delete this account and all its holdings?")) {
-                            await deleteAccount(account.id);
-                          }
-                        }}
+                        onClick={() => handleDelete(account.id)}
+                        disabled={deletingId === account.id}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        {deletingId === account.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        )}
                       </Button>
                       <Link href={`/dashboard/accounts/${account.id}`}>
                         <Button variant="ghost" size="icon">

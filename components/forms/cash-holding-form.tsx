@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import type { CashHolding } from "@/lib/types";
 import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
 
@@ -45,8 +46,10 @@ export function CashHoldingForm({
         setBalance("");
         setCurrency("USD");
       }
+      toast.success(holding ? "Holding updated" : "Holding added");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to save holding");
     } finally {
       setLoading(false);
     }
@@ -100,8 +103,8 @@ export function CashHoldingForm({
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Saving..." : "Save"}
+          <Button type="submit" className="w-full" loading={loading}>
+            Save
           </Button>
         </form>
       </DialogContent>

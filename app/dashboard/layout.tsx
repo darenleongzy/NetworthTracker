@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { NavProgress } from "@/components/nav-progress";
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +17,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
+      <NavProgress />
       <DashboardNav userEmail={user.email ?? ""} />
       <main className="flex-1 overflow-auto bg-background p-6 pt-20 lg:p-8 lg:pt-8">{children}</main>
     </div>
