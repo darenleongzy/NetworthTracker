@@ -4,6 +4,112 @@
 
 ---
 
+## Session: 2026-02-26 - Testing Framework Implementation
+
+### Overview
+Implemented a comprehensive testing framework with Vitest, achieving 100% code coverage on all core library functions. Added 155 unit tests covering financial calculations, utilities, and hooks.
+
+---
+
+### Changes Made
+
+#### Testing Infrastructure
+**Files:** `vitest.config.mts`, `tests/setup.ts`, `tests/mocks/*`, `tests/utils/*`
+**Description:** Set up Vitest with happy-dom environment, path aliases, and coverage thresholds. Created mock infrastructure for Supabase client, MSW handlers for API mocking, and test data factories.
+
+#### Unit Tests
+**Files:** `lib/*.test.ts`, `lib/hooks/*.test.ts`
+**Description:** Added comprehensive tests for all pure functions:
+- `calculations.ts` - Currency formatting, cash/investment totals, gain/loss calculations
+- `fire-calculations.ts` - FIRE number, years to FIRE, projections
+- `currencies.ts` - Currency symbol/name lookups
+- `expense-categories.ts` - Category filtering and labels
+- `exchange-rates.ts` - Currency conversion with caching
+- `hooks/use-table-sort.ts` - Table sorting with null handling
+
+#### Custom Skills
+**Files:** `.claude/commands/commit.md`, `.claude/commands/update-context.md`
+**Description:** Added `/commit` skill for auto-commit with generated messages, and `/update-context` skill for updating PROJECT_NOTES.md.
+
+---
+
+### Files Changed
+
+| File | Changes |
+|------|---------|
+| `package.json` | Added test scripts and devDependencies |
+| `vitest.config.mts` | Vitest configuration with coverage |
+| `tests/setup.ts` | Test setup with mocks for next/navigation, next/cache |
+| `tests/mocks/supabase.ts` | Chainable Supabase client mock |
+| `tests/mocks/server.ts` | MSW server setup |
+| `tests/mocks/handlers/frankfurter.ts` | Exchange rate API mock |
+| `tests/mocks/data/factories.ts` | Test data factories |
+| `tests/utils/render.tsx` | Custom render with providers |
+| `lib/calculations.test.ts` | 37 tests for calculation functions |
+| `lib/fire-calculations.test.ts` | 35 tests for FIRE calculations |
+| `lib/currencies.test.ts` | 16 tests for currency utilities |
+| `lib/expense-categories.test.ts` | 17 tests for expense categories |
+| `lib/exchange-rates.test.ts` | 18 tests for exchange rate functions |
+| `lib/stock-api.test.ts` | 15 tests for stock API utilities |
+| `lib/hooks/use-table-sort.test.ts` | 17 tests for table sort hook |
+| `.claude/commands/commit.md` | Custom /commit skill |
+| `.claude/commands/update-context.md` | Custom /update-context skill |
+
+---
+
+### Test Coverage
+
+| Metric | Coverage |
+|--------|----------|
+| Statements | 100% |
+| Branches | 100% |
+| Functions | 100% |
+| Lines | 100% |
+
+**Total: 155 tests passing**
+
+---
+
+### NPM Scripts Added
+
+```bash
+npm run test           # Interactive test runner
+npm run test:run       # Single test run
+npm run test:coverage  # Coverage report
+```
+
+---
+
+### Verification
+
+- [x] Build passes (`npm run build`)
+- [x] All 155 tests pass (`npm run test:run`)
+- [x] 100% coverage achieved (`npm run test:coverage`)
+- [x] Lint passes (`npm run lint`)
+
+---
+
+### Branch & Commit Info
+
+- **Branch:** `testing-framework`
+- **Commits:** `971e750`, `d78b0a0`
+- **Pushed to:** `origin/testing-framework`
+
+---
+
+### Recommendations Completed
+
+From previous session's recommendations:
+- [x] **Add test framework** - Vitest with 100% coverage implemented
+
+Remaining recommendations:
+- [ ] Add input validation with Zod schemas
+- [ ] Add toast notifications for user feedback
+- [ ] Replace `confirm()` with AlertDialog
+- [ ] Add error boundaries and loading states
+
+---
+
 ## Session: 2026-02-22 - Security Review & Fixes
 
 ### Overview
@@ -162,4 +268,4 @@ These can be re-implemented in a future session if needed.
 
 ---
 
-*Last updated: 2026-02-22*
+*Last updated: 2026-02-26*
