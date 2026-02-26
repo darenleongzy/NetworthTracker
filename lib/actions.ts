@@ -29,6 +29,22 @@ export async function createAccount(name: string, type: AccountType) {
 
 export async function updateAccount(id: string, name: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify ownership before update
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (!account || account.user_id !== user.id) {
+    throw new Error("Account not found");
+  }
+
   const { error } = await supabase
     .from("accounts")
     .update({ name })
@@ -41,6 +57,22 @@ export async function updateAccount(id: string, name: string) {
 
 export async function deleteAccount(id: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify ownership before delete
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (!account || account.user_id !== user.id) {
+    throw new Error("Account not found");
+  }
+
   const { error } = await supabase.from("accounts").delete().eq("id", id);
 
   if (error) throw new Error(error.message);
@@ -58,8 +90,34 @@ export async function upsertCashHolding(
   label?: string | null
 ) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify account ownership
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("user_id")
+    .eq("id", accountId)
+    .single();
+
+  if (!account || account.user_id !== user.id) {
+    throw new Error("Account not found");
+  }
 
   if (holdingId) {
+    // Verify holding belongs to user's account
+    const { data: holding } = await supabase
+      .from("cash_holdings")
+      .select("account_id")
+      .eq("id", holdingId)
+      .single();
+
+    if (!holding || holding.account_id !== accountId) {
+      throw new Error("Holding not found");
+    }
+
     const { error } = await supabase
       .from("cash_holdings")
       .update({ balance, currency, label })
@@ -81,6 +139,21 @@ export async function upsertCpfHoldings(
   holdings: { label: string; balance: number }[]
 ) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify account ownership
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("user_id")
+    .eq("id", accountId)
+    .single();
+
+  if (!account || account.user_id !== user.id) {
+    throw new Error("Account not found");
+  }
 
   // Get existing CPF holdings for this account
   const { data: existing } = await supabase
@@ -115,6 +188,23 @@ export async function upsertCpfHoldings(
 
 export async function deleteCashHolding(id: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify ownership via account
+  const { data: holding } = await supabase
+    .from("cash_holdings")
+    .select("account_id, accounts(user_id)")
+    .eq("id", id)
+    .single();
+
+  const accountData = holding?.accounts as unknown as { user_id: string } | null;
+  if (!holding || !accountData || accountData.user_id !== user.id) {
+    throw new Error("Holding not found");
+  }
+
   const { error } = await supabase.from("cash_holdings").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard");
@@ -130,9 +220,36 @@ export async function upsertStockHolding(
   holdingId?: string
 ) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify account ownership
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("user_id")
+    .eq("id", accountId)
+    .single();
+
+  if (!account || account.user_id !== user.id) {
+    throw new Error("Account not found");
+  }
+
   const upperTicker = ticker.toUpperCase();
 
   if (holdingId) {
+    // Verify holding belongs to user's account
+    const { data: holding } = await supabase
+      .from("stock_holdings")
+      .select("account_id")
+      .eq("id", holdingId)
+      .single();
+
+    if (!holding || holding.account_id !== accountId) {
+      throw new Error("Holding not found");
+    }
+
     const { error } = await supabase
       .from("stock_holdings")
       .update({
@@ -168,6 +285,23 @@ export async function upsertStockHolding(
 
 export async function deleteStockHolding(id: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify ownership via account
+  const { data: holding } = await supabase
+    .from("stock_holdings")
+    .select("account_id, accounts(user_id)")
+    .eq("id", id)
+    .single();
+
+  const accountData = holding?.accounts as unknown as { user_id: string } | null;
+  if (!holding || !accountData || accountData.user_id !== user.id) {
+    throw new Error("Holding not found");
+  }
+
   const { error } = await supabase
     .from("stock_holdings")
     .delete()
@@ -343,6 +477,21 @@ export async function updateExpense(
   description?: string
 ) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify ownership
+  const { data: expense } = await supabase
+    .from("expenses")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (!expense || expense.user_id !== user.id) {
+    throw new Error("Expense not found");
+  }
 
   const { error } = await supabase
     .from("expenses")
@@ -363,6 +512,22 @@ export async function updateExpense(
 
 export async function deleteExpense(id: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify ownership
+  const { data: expense } = await supabase
+    .from("expenses")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (!expense || expense.user_id !== user.id) {
+    throw new Error("Expense not found");
+  }
+
   const { error } = await supabase.from("expenses").delete().eq("id", id);
 
   if (error) throw new Error(error.message);
