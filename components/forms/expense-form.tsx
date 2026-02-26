@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import type { Expense, ExpenseCategory, ExpenseSubcategory } from "@/lib/types";
 import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
 import {
@@ -90,8 +91,10 @@ export function ExpenseForm({ expense }: { expense?: Expense }) {
         setSubcategory("");
         setExpenseDate(new Date().toISOString().split("T")[0]);
       }
+      toast.success(expense ? "Expense updated" : "Expense added");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to save expense");
     } finally {
       setLoading(false);
     }
@@ -209,9 +212,10 @@ export function ExpenseForm({ expense }: { expense?: Expense }) {
           <Button
             type="submit"
             className="w-full"
-            disabled={loading || !subcategory}
+            loading={loading}
+            disabled={!subcategory}
           >
-            {loading ? "Saving..." : "Save"}
+            Save
           </Button>
         </form>
       </DialogContent>

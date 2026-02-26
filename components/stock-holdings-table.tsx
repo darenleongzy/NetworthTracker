@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { deleteStockHolding } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/table";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { StockHoldingForm } from "@/components/forms/stock-holding-form";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { StockHolding } from "@/lib/types";
 import type { ExchangeRates } from "@/lib/exchange-rates";
 import type { StockPriceData } from "@/lib/stock-api";
@@ -41,6 +42,21 @@ export function StockHoldingsTable({
   baseCurrency?: string;
   exchangeRates?: ExchangeRates;
 }) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this stock holding?")) return;
+    setDeletingId(id);
+    try {
+      await deleteStockHolding(id);
+      toast.success("Stock holding deleted");
+    } catch {
+      toast.error("Failed to delete stock holding");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   // Compute derived values for sorting
   const holdingsWithComputed = useMemo<StockHoldingWithComputed[]>(() => {
     return holdings.map((h) => {
@@ -140,13 +156,14 @@ export function StockHoldingsTable({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={async () => {
-                    if (confirm("Delete this stock holding?")) {
-                      await deleteStockHolding(h.id);
-                    }
-                  }}
+                  onClick={() => handleDelete(h.id)}
+                  disabled={deletingId === h.id}
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  {deletingId === h.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  )}
                 </Button>
               </div>
             </TableCell>

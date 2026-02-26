@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Pencil } from "lucide-react";
+import { toast } from "sonner";
 import type { CashHolding } from "@/lib/types";
 import { CPF_SUB_ACCOUNTS } from "@/lib/types";
 
@@ -57,8 +58,10 @@ export function CpfHoldingsForm({
       ];
       await upsertCpfHoldings(accountId, holdingsData);
       setOpen(false);
+      toast.success("CPF balances updated");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to save CPF balances");
     } finally {
       setLoading(false);
     }
@@ -117,8 +120,8 @@ export function CpfHoldingsForm({
               />
             </div>
           ))}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Saving..." : "Save Balances"}
+          <Button type="submit" className="w-full" loading={loading}>
+            Save Balances
           </Button>
         </form>
       </DialogContent>
