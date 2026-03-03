@@ -1,4 +1,4 @@
-import type { CashHolding, StockHolding } from "@/lib/types";
+import type { CashHolding, StockHolding, Expense } from "@/lib/types";
 import type { ExchangeRates } from "@/lib/exchange-rates";
 import type { StockPriceData } from "@/lib/stock-api";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -108,4 +108,26 @@ export function calculateGainLoss(
   const absolute = currentValue - costBasis;
   const percent = costBasis > 0 ? (absolute / costBasis) * 100 : 0;
   return { absolute, percent };
+}
+
+/**
+ * Filter expenses for current month display.
+ * - Recurring expenses: included if their date is on or before today (they apply monthly)
+ * - Non-recurring expenses: only included if they're from the current month
+ */
+export function getCurrentMonthExpenses(expenses: Expense[]): Expense[] {
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split("T")[0];
+
+  return expenses.filter((e) => {
+    // Recurring expenses apply every month (from their start date onwards)
+    if (e.category === "recurring") {
+      return e.expense_date <= today;
+    }
+    // Non-recurring expenses only count in their specific month
+    return e.expense_date >= currentMonthStart;
+  });
 }

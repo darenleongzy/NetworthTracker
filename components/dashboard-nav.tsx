@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
@@ -15,6 +14,7 @@ import {
   TrendingUp,
   Receipt,
   Flame,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,17 +25,23 @@ const navItems = [
   { href: "/dashboard/fire", label: "FIRE", icon: Flame },
 ];
 
+const adminNavItem = { href: "/dashboard/admin", label: "Admin", icon: Shield };
+
 function NavContent({
   userEmail,
   pathname,
   onSignOut,
   isDarkSidebar = false,
+  isAdmin = false,
 }: {
   userEmail: string;
   pathname: string;
   onSignOut: () => void;
   isDarkSidebar?: boolean;
+  isAdmin?: boolean;
 }) {
+  const allNavItems = isAdmin ? [...navItems, adminNavItem] : navItems;
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-4 py-4">
@@ -44,7 +50,7 @@ function NavContent({
       </div>
       <div className={cn("h-px", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
       <nav className="flex-1 space-y-1 px-2 py-4">
-        {navItems.map((item) => (
+        {allNavItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <button
               className={cn(
@@ -86,7 +92,7 @@ function NavContent({
   );
 }
 
-export function DashboardNav({ userEmail }: { userEmail: string }) {
+export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string; isAdmin?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -116,6 +122,7 @@ export function DashboardNav({ userEmail }: { userEmail: string }) {
               userEmail={userEmail}
               pathname={pathname}
               onSignOut={handleSignOut}
+              isAdmin={isAdmin}
             />
           </SheetContent>
         </Sheet>
@@ -133,6 +140,7 @@ export function DashboardNav({ userEmail }: { userEmail: string }) {
           pathname={pathname}
           onSignOut={handleSignOut}
           isDarkSidebar
+          isAdmin={isAdmin}
         />
       </aside>
     </>

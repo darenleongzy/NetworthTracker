@@ -7,8 +7,9 @@ import {
   calculateInvestmentValue,
   calculateInvestmentCost,
   calculateGainLoss,
+  getCurrentMonthExpenses,
 } from "./calculations";
-import type { CashHolding, StockHolding } from "@/lib/types";
+import type { CashHolding, StockHolding, Expense } from "@/lib/types";
 import type { StockPriceData } from "@/lib/stock-api";
 
 describe("formatCurrency", () => {
@@ -296,5 +297,128 @@ describe("calculateGainLoss", () => {
     const result = calculateGainLoss([], {}, "USD", {});
     expect(result.absolute).toBe(0);
     expect(result.percent).toBe(0);
+  });
+});
+
+describe("getCurrentMonthExpenses", () => {
+  const createExpense = (category: "recurring" | "non_recurring", daysAgo: number): Expense => {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    return {
+      id: `expense-${daysAgo}`,
+      user_id: "test-user",
+      amount: 100,
+      currency: "USD",
+      category,
+      subcategory: category === "recurring" ? "utilities" : "groceries" as const,
+      description: null,
+      expense_date: date.toISOString().split("T")[0],
+      created_at: date.toISOString(),
+      updated_at: date.toISOString(),
+    };
+  };
+
+  it("includes recurring expenses from previous months", () => {
+    const expenses = [
+      createExpense("recurring", 45), // ~1.5 months ago
+      createExpense("recurring", 10), // This month
+    ];
+    const result = getCurrentMonthExpenses(expenses);
+    expect(result).toHaveLength(2);
+  });
+
+  it("excludes non-recurring expenses from previous months", () => {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const expenses: Expense[] = [
+      {
+        id: "last-month",
+        user_id: "test-user",
+        amount: 100,
+        currency: "USD",
+        category: "non_recurring",
+        subcategory: "groceries",
+        description: null,
+        expense_date: lastMonth.toISOString().split("T")[0],
+        created_at: lastMonth.toISOString(),
+        updated_at: lastMonth.toISOString(),
+      },
+      {
+        id: "this-month",
+        user_id: "test-user",
+        amount: 100,
+        currency: "USD",
+        category: "non_recurring",
+        subcategory: "groceries",
+        description: null,
+        expense_date: thisMonth.toISOString().split("T")[0],
+        created_at: thisMonth.toISOString(),
+        updated_at: thisMonth.toISOString(),
+      },
+    ];
+    const result = getCurrentMonthExpenses(expenses);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("this-month");
+  });
+
+  it("includes non-recurring expenses from current month", () => {
+    // Create expenses explicitly in current month
+    const now = new Date();
+    const thisMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const expenses: Expense[] = [
+      {
+        id: "today",
+        user_id: "test-user",
+        amount: 100,
+        currency: "USD",
+        category: "non_recurring",
+        subcategory: "groceries",
+        description: null,
+        expense_date: now.toISOString().split("T")[0],
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      {
+        id: "this-month",
+        user_id: "test-user",
+        amount: 100,
+        currency: "USD",
+        category: "non_recurring",
+        subcategory: "groceries",
+        description: null,
+        expense_date: thisMonthDate.toISOString().split("T")[0],
+        created_at: thisMonthDate.toISOString(),
+        updated_at: thisMonthDate.toISOString(),
+      },
+    ];
+    const result = getCurrentMonthExpenses(expenses);
+    expect(result).toHaveLength(2);
+  });
+
+  it("excludes future recurring expenses", () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    const expenses: Expense[] = [
+      {
+        id: "future",
+        user_id: "test-user",
+        amount: 100,
+        currency: "USD",
+        category: "recurring",
+        subcategory: "utilities",
+        description: null,
+        expense_date: futureDate.toISOString().split("T")[0],
+        created_at: futureDate.toISOString(),
+        updated_at: futureDate.toISOString(),
+      },
+    ];
+    const result = getCurrentMonthExpenses(expenses);
+    expect(result).toHaveLength(0);
+  });
+
+  it("returns empty array for empty input", () => {
+    const result = getCurrentMonthExpenses([]);
+    expect(result).toHaveLength(0);
   });
 });

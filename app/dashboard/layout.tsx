@@ -15,10 +15,19 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
+  // Check if user is admin
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  const isAdmin = !!adminRecord;
+
   return (
     <div className="flex min-h-screen bg-background">
       <NavProgress />
-      <DashboardNav userEmail={user.email ?? ""} />
+      <DashboardNav userEmail={user.email ?? ""} isAdmin={isAdmin} />
       <main className="flex-1 overflow-auto bg-background p-6 pt-20 lg:p-8 lg:pt-8">{children}</main>
     </div>
   );

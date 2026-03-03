@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentMonthExpenses } from "@/lib/calculations";
 import { ExpenseForm } from "@/components/forms/expense-form";
 import { ExpensesTable } from "@/components/expenses-table";
 import { ExpenseBreakdownChart } from "@/components/charts/expense-breakdown-chart";
@@ -29,14 +30,8 @@ export default async function ExpensesPage() {
     .filter((e) => e.category === "non_recurring")
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
-  // Get current month expenses for the chart
-  const now = new Date();
-  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .split("T")[0];
-  const currentMonthExpenses = typedExpenses.filter(
-    (e) => e.expense_date >= currentMonthStart
-  );
+  // Get current month expenses for the chart (includes recurring from previous months)
+  const currentMonthExpenses = getCurrentMonthExpenses(typedExpenses);
 
   return (
     <div className="space-y-6">
