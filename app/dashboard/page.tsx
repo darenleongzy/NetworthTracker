@@ -6,6 +6,7 @@ import {
   calculateCashTotal,
   calculateInvestmentValue,
   calculateInvestmentCost,
+  getCurrentMonthExpenses,
 } from "@/lib/calculations";
 import { saveSnapshot, getUserPreferences } from "@/lib/actions";
 import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
@@ -22,12 +23,6 @@ import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  // Get current month date range
-  const now = new Date();
-  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .split("T")[0];
-
   // Fetch all user data in parallel
   const [accountsRes, snapshotsRes, expensesRes, preferences] = await Promise.all([
     supabase
@@ -42,7 +37,6 @@ export default async function DashboardPage() {
     supabase
       .from("expenses")
       .select("*")
-      .gte("expense_date", currentMonthStart)
       .order("expense_date", { ascending: false }),
     getUserPreferences(),
   ]);
@@ -52,7 +46,8 @@ export default async function DashboardPage() {
     stock_holdings: StockHolding[];
   })[];
   const snapshotsRaw = snapshotsRes.data ?? [];
-  const currentMonthExpenses = (expensesRes.data ?? []) as Expense[];
+  const allExpenses = (expensesRes.data ?? []) as Expense[];
+  const currentMonthExpenses = getCurrentMonthExpenses(allExpenses);
   const baseCurrency = preferences.base_currency;
 
   // Fetch exchange rates for base currency

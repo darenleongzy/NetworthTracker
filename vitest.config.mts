@@ -17,6 +17,9 @@ export default defineConfig({
         "lib/expense-categories.ts",
         "lib/exchange-rates.ts",
         "lib/hooks/*.ts",
+        "lib/admin-actions.ts",
+        "components/signup-form.tsx",
+        "components/waitlist-form.tsx",
       ],
       exclude: [
         "lib/supabase/**",
