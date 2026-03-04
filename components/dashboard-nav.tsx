@@ -15,6 +15,7 @@ import {
   Receipt,
   Flame,
   Shield,
+  Coffee,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,12 +45,12 @@ function NavContent({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 px-4 py-4">
+      <div className="flex items-center gap-2 px-4 py-4 shrink-0">
         <TrendingUp className={cn("h-6 w-6", isDarkSidebar && "text-sidebar-primary")} />
         <span className="text-lg font-bold">NetWorth</span>
       </div>
-      <div className={cn("h-px", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
-      <nav className="flex-1 space-y-1 px-2 py-4">
+      <div className={cn("h-px shrink-0", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
+      <nav className="flex-1 overflow-y-auto space-y-1 px-2 py-4">
         {allNavItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <button
@@ -70,11 +71,25 @@ function NavContent({
           </Link>
         ))}
       </nav>
-      <div className={cn("h-px", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
-      <div className="p-4 space-y-2">
+      <div className={cn("h-px shrink-0", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
+      <div className="p-4 space-y-2 shrink-0">
         <p className={cn("text-xs truncate", isDarkSidebar ? "text-sidebar-foreground/60" : "text-muted-foreground")}>
           {userEmail}
         </p>
+        <a
+          href="https://buymeacoffee.com/dalezy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            isDarkSidebar
+              ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              : "text-foreground hover:bg-secondary"
+          )}
+        >
+          <Coffee className="mr-2 h-4 w-4" />
+          Buy me a coffee
+        </a>
         <button
           className={cn(
             "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -134,7 +149,7 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
       <div className="lg:hidden h-14" /> {/* Spacer for fixed mobile nav */}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      <aside className="hidden lg:flex w-64 h-screen sticky top-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
         <NavContent
           userEmail={userEmail}
           pathname={pathname}

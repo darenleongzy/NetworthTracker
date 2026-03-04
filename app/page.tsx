@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Shield, BarChart3, Sparkles } from "lucide-react";
+import { TrendingUp, Shield, BarChart3, Sparkles, Heart } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -129,7 +129,16 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t px-6 py-6 text-center text-sm text-muted-foreground">
-        Net Worth Tracker &mdash; Track your financial journey
+        <p>Net Worth Tracker &mdash; Track your financial journey</p>
+        <a
+          href="https://buymeacoffee.com/dalezy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Heart className="h-4 w-4" />
+          Support this project
+        </a>
       </footer>
     </div>
   );

@@ -130,9 +130,9 @@ export function HoldingsOverview({
         <CardTitle>All Holdings</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[660px]">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow>
               <TableHead>Account</TableHead>
               <TableHead>Holding</TableHead>
