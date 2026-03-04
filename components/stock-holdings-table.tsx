@@ -82,9 +82,9 @@ export function StockHoldingsTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-auto max-h-[660px]">
       <Table>
-        <TableHeader>
+        <TableHeader className="sticky top-0 bg-card z-10">
         <TableRow>
           <TableHead>Ticker</TableHead>
           <SortableHeader
