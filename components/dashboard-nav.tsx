@@ -32,12 +32,14 @@ function NavContent({
   userEmail,
   pathname,
   onSignOut,
+  onNavigate,
   isDarkSidebar = false,
   isAdmin = false,
 }: {
   userEmail: string;
   pathname: string;
   onSignOut: () => void;
+  onNavigate?: () => void;
   isDarkSidebar?: boolean;
   isAdmin?: boolean;
 }) {
@@ -52,7 +54,7 @@ function NavContent({
       <div className={cn("h-px shrink-0", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
       <nav className="flex-1 overflow-y-auto space-y-1 px-2 py-4">
         {allNavItems.map((item) => (
-          <Link key={item.href} href={item.href}>
+          <Link key={item.href} href={item.href} onClick={onNavigate}>
             <button
               className={cn(
                 "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -137,6 +139,7 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
               userEmail={userEmail}
               pathname={pathname}
               onSignOut={handleSignOut}
+              onNavigate={() => setMobileOpen(false)}
               isAdmin={isAdmin}
             />
           </SheetContent>
