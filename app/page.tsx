@@ -72,7 +72,7 @@ export default function LandingPage() {
                   <div className="h-3 w-3 rounded-full bg-green-500" />
                 </div>
                 <div className="ml-4 flex-1 rounded-md bg-background px-3 py-1 text-xs text-muted-foreground">
-                  networthtracker.app/dashboard
+                  trackmyworth.xyz/dashboard
                 </div>
               </div>
               {/* Screenshot container */}
