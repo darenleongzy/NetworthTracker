@@ -1,11 +1,27 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Shield, BarChart3, Sparkles, Heart } from "lucide-react";
+import {
+  OrganizationSchema,
+  SoftwareApplicationSchema,
+} from "@/components/structured-data";
+
+export const metadata: Metadata = {
+  title: "Net Worth Tracker - Monitor Your Wealth & FIRE Goals",
+  description:
+    "Track your net worth, savings, and investments in one dashboard. See your portfolio value with live stock prices, monitor cash accounts, and watch your wealth grow over time.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
+      <OrganizationSchema />
+      <SoftwareApplicationSchema />
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-6 w-6" />
