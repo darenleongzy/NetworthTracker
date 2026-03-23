@@ -2,7 +2,7 @@ export function OrganizationSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "TrackMyWorth",
+    name: "Track My Worth",
     url: "https://trackmyworth.xyz",
     logo: "https://trackmyworth.xyz/og-image.png",
     description:
@@ -21,7 +21,7 @@ export function SoftwareApplicationSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "TrackMyWorth",
+    name: "Track My Worth",
     applicationCategory: "FinanceApplication",
     operatingSystem: "Web",
     url: "https://trackmyworth.xyz",

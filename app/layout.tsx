@@ -17,8 +17,8 @@ const siteUrl = "https://trackmyworth.xyz";
 
 export const metadata: Metadata = {
   title: {
-    default: "Net Worth Tracker - Track Your Wealth & Investments | TrackMyWorth",
-    template: "%s | TrackMyWorth",
+    default: "Track My Worth - Track Your Wealth & Investments",
+    template: "%s | Track My Worth",
   },
   description:
     "Track your net worth, savings, and investment portfolio in one simple dashboard. Monitor cash accounts, stocks, and see your wealth grow over time with live price updates.",
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
     "portfolio tracker",
     "financial dashboard",
   ],
-  authors: [{ name: "TrackMyWorth" }],
-  creator: "TrackMyWorth",
+  authors: [{ name: "Track My Worth" }],
+  creator: "Track My Worth",
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: "/",
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteUrl,
-    siteName: "TrackMyWorth",
-    title: "Net Worth Tracker - Track Your Wealth & Investments",
+    siteName: "Track My Worth",
+    title: "Track My Worth - Track Your Wealth & Investments",
     description:
       "Track your net worth, savings, and investment portfolio in one simple dashboard. Monitor cash accounts, stocks, and see your wealth grow over time.",
     images: [
@@ -51,13 +51,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "TrackMyWorth - Net Worth Tracker Dashboard",
+        alt: "Track My Worth Dashboard",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Net Worth Tracker - Track Your Wealth & Investments",
+    title: "Track My Worth - Track Your Wealth & Investments",
     description:
       "Track your net worth, savings, and investment portfolio in one simple dashboard.",
     images: ["/og-image.png"],

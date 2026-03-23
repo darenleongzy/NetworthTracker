@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   Legend,
+  Label,
 } from "recharts";
 import {
   Card,
@@ -89,9 +90,9 @@ export function ExpenseBreakdownChart({
               <Pie
                 data={data}
                 cx="50%"
-                cy="45%"
-                innerRadius={50}
-                outerRadius={75}
+                cy="50%"
+                innerRadius={52}
+                outerRadius={78}
                 paddingAngle={2}
                 dataKey="value"
                 label={({ percent }) =>
@@ -99,6 +100,24 @@ export function ExpenseBreakdownChart({
                 }
                 labelLine={false}
               >
+                <Label
+                  position="center"
+                  content={({ viewBox }) => {
+                    if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) return null;
+
+                    return (
+                      <text
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="fill-foreground text-[1.5rem] font-bold tracking-tight"
+                      >
+                        {formatCompactCurrency(total, currencySymbol)}
+                      </text>
+                    );
+                  }}
+                />
                 {data.map((entry) => (
                   <Cell
                     key={entry.subcategory}
@@ -120,12 +139,6 @@ export function ExpenseBreakdownChart({
               />
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ top: "-20px" }}>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-lg font-bold">{formatCompactCurrency(total, currencySymbol)}</p>
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>

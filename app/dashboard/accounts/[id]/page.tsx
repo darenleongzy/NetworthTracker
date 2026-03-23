@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPreferences } from "@/lib/actions";
+import { getCpfAccountSettings, getUserPreferences } from "@/lib/actions";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { getStockPrices } from "@/lib/stock-api";
 import { AccountDetail } from "@/components/account-detail";
@@ -27,6 +27,9 @@ export default async function AccountDetailPage({
 
   if (!account) notFound();
 
+  const cpfSettings =
+    account.type === "cpf" ? await getCpfAccountSettings(account.id) : null;
+
   const baseCurrency = preferences.base_currency;
   const exchangeRates = await getExchangeRates(baseCurrency);
 
@@ -41,6 +44,7 @@ export default async function AccountDetailPage({
       baseCurrency={baseCurrency}
       exchangeRates={exchangeRates}
       stockPrices={stockPrices}
+      cpfSettings={cpfSettings}
     />
   );
 }

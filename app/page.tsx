@@ -9,7 +9,7 @@ import {
 } from "@/components/structured-data";
 
 export const metadata: Metadata = {
-  title: "Net Worth Tracker - Monitor Your Wealth & FIRE Goals",
+  title: "Track My Worth - Monitor Your Wealth & FIRE Goals",
   description:
     "Track your net worth, savings, and investments in one dashboard. See your portfolio value with live stock prices, monitor cash accounts, and watch your wealth grow over time.",
   alternates: {
@@ -25,7 +25,7 @@ export default function LandingPage() {
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-6 w-6" />
-          <span className="text-xl font-bold">NetWorth Tracker</span>
+          <span className="text-xl font-bold">Track My Worth</span>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/login">
@@ -95,7 +95,7 @@ export default function LandingPage() {
               <div className="relative aspect-[16/9] bg-muted">
                 <Image
                   src="/dashboard-preview.png"
-                  alt="NetWorth Tracker Dashboard Preview"
+                  alt="Track My Worth Dashboard Preview"
                   fill
                   className="object-cover object-top"
                   priority
@@ -145,7 +145,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t px-6 py-6 text-center text-sm text-muted-foreground">
-        <p>Net Worth Tracker &mdash; Track your financial journey</p>
+        <p>Track My Worth &mdash; Track your financial journey</p>
         <a
           href="https://buymeacoffee.com/dalezy"
           target="_blank"

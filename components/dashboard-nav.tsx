@@ -49,7 +49,7 @@ function NavContent({
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-4 py-4 shrink-0">
         <TrendingUp className={cn("h-6 w-6", isDarkSidebar && "text-sidebar-primary")} />
-        <span className="text-lg font-bold">NetWorth</span>
+        <span className="text-lg font-bold">Track My Worth</span>
       </div>
       <div className={cn("h-px shrink-0", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
       <nav className="flex-1 overflow-y-auto space-y-1 px-2 py-4">
@@ -146,7 +146,7 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
         </Sheet>
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          <span className="font-bold">NetWorth</span>
+          <span className="font-bold">Track My Worth</span>
         </div>
       </div>
       <div className="lg:hidden h-14" /> {/* Spacer for fixed mobile nav */}

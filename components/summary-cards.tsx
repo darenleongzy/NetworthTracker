@@ -5,17 +5,8 @@ import { TrendingUp, Wallet, BarChart3, TrendingDown, Landmark } from "lucide-re
 
 function formatWholeNumber(value: number, currencyCode: string = "USD"): string {
   const rounded = Math.round(value);
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currencyCode,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(rounded);
-  } catch {
-    const symbol = getCurrencySymbol(currencyCode);
-    return `${symbol}${rounded.toLocaleString("en-US")}`;
-  }
+  const symbol = getCurrencySymbol(currencyCode);
+  return `${symbol}${rounded.toLocaleString("en-US")}`;
 }
 
 export function SummaryCards({
@@ -37,7 +28,7 @@ export function SummaryCards({
   const currencySymbol = getCurrencySymbol(baseCurrency);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       {/* Total Net Worth - Purple */}
       <div className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 p-6 text-white shadow-lg shadow-purple-500/25 overflow-hidden">
         <div className="flex items-center justify-between pb-2">
@@ -46,7 +37,7 @@ export function SummaryCards({
             <span className="text-sm font-bold">{currencySymbol}</span>
           </div>
         </div>
-        <div className="text-2xl lg:text-3xl font-bold truncate">
+        <div className="text-center text-[clamp(1.25rem,4vw,1.85rem)] font-bold leading-tight tracking-tight sm:text-left">
           {formatWholeNumber(totalNetWorth, baseCurrency)}
         </div>
       </div>
@@ -59,7 +50,7 @@ export function SummaryCards({
             <Wallet className="h-5 w-5" />
           </div>
         </div>
-        <div className="text-2xl lg:text-3xl font-bold truncate">
+        <div className="text-center text-[clamp(1.25rem,4vw,1.85rem)] font-bold leading-tight tracking-tight sm:text-left">
           {formatWholeNumber(cashTotal, baseCurrency)}
         </div>
       </div>
@@ -72,7 +63,7 @@ export function SummaryCards({
             <BarChart3 className="h-5 w-5" />
           </div>
         </div>
-        <div className="text-2xl lg:text-3xl font-bold truncate">
+        <div className="text-center text-[clamp(1.25rem,4vw,1.85rem)] font-bold leading-tight tracking-tight sm:text-left">
           {formatWholeNumber(investmentValue, baseCurrency)}
         </div>
       </div>
@@ -85,7 +76,7 @@ export function SummaryCards({
             <Landmark className="h-5 w-5" />
           </div>
         </div>
-        <div className="text-2xl lg:text-3xl font-bold truncate">
+        <div className="text-center text-[clamp(1.25rem,4vw,1.85rem)] font-bold leading-tight tracking-tight sm:text-left">
           {formatWholeNumber(cpfSrsTotal, baseCurrency)}
         </div>
       </div>
@@ -106,7 +97,7 @@ export function SummaryCards({
             )}
           </div>
         </div>
-        <div className="text-2xl lg:text-3xl font-bold truncate">
+        <div className="text-center text-[clamp(1.25rem,4vw,1.85rem)] font-bold leading-tight tracking-tight sm:text-left">
           {isGain ? "+" : ""}
           {formatWholeNumber(totalGainLoss, baseCurrency)}
         </div>

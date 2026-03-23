@@ -33,7 +33,7 @@ test.describe("Landing Page", () => {
 
     // Check title
     const title = await page.title();
-    expect(title).toContain("Net Worth Tracker");
+    expect(title).toContain("Track My Worth");
 
     // Check meta description
     const description = await page
