@@ -3,8 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { refreshStockPriceIfStale } from "@/lib/stock-api";
-import type { AccountType, ExpenseCategory, ExpenseSubcategory, FireSettings } from "@/lib/types";
-import { DEFAULT_FIRE_SETTINGS } from "@/lib/types";
+import type {
+  AccountType,
+  CpfAccountSettings,
+  ExpenseCategory,
+  ExpenseSubcategory,
+  FireSettings,
+} from "@/lib/types";
+import {
+  DEFAULT_CPF_ACCOUNT_SETTINGS,
+  DEFAULT_FIRE_SETTINGS,
+} from "@/lib/types";
+
+function isMissingCpfSettingsTableError(error: {
+  code?: string;
+  message?: string;
+}) {
+  return (
+    error.code === "PGRST205" ||
+    error.code === "42P01" ||
+    error.message?.includes("public.cpf_account_settings") ||
+    error.message?.includes("schema cache") ||
+    error.message?.includes("does not exist")
+  );
+}
 
 // ── Accounts ──
 
@@ -182,6 +204,104 @@ export async function upsertCpfHoldings(
     }
   }
 
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/accounts/${accountId}`);
+}
+
+export async function getCpfAccountSettings(
+  accountId: string
+): Promise<CpfAccountSettings | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("user_id, type")
+    .eq("id", accountId)
+    .single();
+
+  if (!account || account.user_id !== user.id) {
+    throw new Error("Account not found");
+  }
+
+  if (account.type !== "cpf") {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("cpf_account_settings")
+    .select("*")
+    .eq("account_id", accountId)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingCpfSettingsTableError(error)) {
+      return null;
+    }
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+export async function upsertCpfAccountSettings(
+  accountId: string,
+  settings: Partial<Omit<CpfAccountSettings, "account_id" | "updated_at">>
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("user_id, type")
+    .eq("id", accountId)
+    .single();
+
+  if (!account || account.user_id !== user.id) {
+    throw new Error("Account not found");
+  }
+
+  if (account.type !== "cpf") {
+    throw new Error("CPF settings can only be saved for CPF accounts");
+  }
+
+  const mergedSettings = {
+    ...DEFAULT_CPF_ACCOUNT_SETTINGS,
+    ...settings,
+  };
+
+  if (mergedSettings.early_retirement_age < mergedSettings.current_age) {
+    throw new Error("Early retirement age must be at least the current age");
+  }
+
+  if (
+    mergedSettings.mortgage_payoff_age !== null &&
+    mergedSettings.mortgage_payoff_age < mergedSettings.current_age
+  ) {
+    throw new Error("Mortgage payoff age must be at least the current age");
+  }
+
+  const { error } = await supabase.from("cpf_account_settings").upsert(
+    {
+      account_id: accountId,
+      ...mergedSettings,
+    },
+    { onConflict: "account_id" }
+  );
+
+  if (error) {
+    if (isMissingCpfSettingsTableError(error)) {
+      throw new Error(
+        "The CPF settings table has not been created yet. Run the latest Supabase migration and try again."
+      );
+    }
+    throw new Error(error.message);
+  }
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/accounts/${accountId}`);
 }

@@ -71,6 +71,35 @@ export interface AccountWithHoldings extends Account {
   stock_holdings: StockHolding[];
 }
 
+export interface CpfAccountSettings {
+  account_id: string;
+  current_age: number;
+  monthly_salary: number;
+  oa_interest_rate: number;
+  sa_interest_rate: number;
+  ma_interest_rate: number;
+  frs_met_for_ma_overflow: boolean;
+  mortgage_monthly_deduction: number;
+  mortgage_payoff_age: number | null;
+  early_retirement_age: number;
+  updated_at: string;
+}
+
+export const DEFAULT_CPF_ACCOUNT_SETTINGS: Omit<
+  CpfAccountSettings,
+  "account_id" | "updated_at"
+> = {
+  current_age: 35,
+  monthly_salary: 0,
+  oa_interest_rate: 2.5,
+  sa_interest_rate: 4,
+  ma_interest_rate: 4,
+  frs_met_for_ma_overflow: false,
+  mortgage_monthly_deduction: 0,
+  mortgage_payoff_age: null,
+  early_retirement_age: 55,
+};
+
 // Expense types
 export type ExpenseCategory = "recurring" | "non_recurring";
 

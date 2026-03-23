@@ -8,6 +8,10 @@ import { ExpenseBreakdownChart } from "@/components/charts/expense-breakdown-cha
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Expense } from "@/lib/types";
 
+function formatExpenseAmount(value: number) {
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+}
+
 export default async function ExpensesPage() {
   const supabase = await createClient();
 
@@ -33,6 +37,33 @@ export default async function ExpensesPage() {
   // Get current month expenses for the chart (includes recurring from previous months)
   const currentMonthExpenses = getCurrentMonthExpenses(typedExpenses);
 
+  const expenseCards = [
+    {
+      title: "Total Expenses",
+      value: totalExpenses,
+      tone:
+        "border-transparent bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-purple-500/25",
+      text: "text-white",
+      subtext: "text-white/80",
+    },
+    {
+      title: "Recurring",
+      value: recurringTotal,
+      tone:
+        "border-transparent bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25",
+      text: "text-white",
+      subtext: "text-white/80",
+    },
+    {
+      title: "Non-Recurring",
+      value: nonRecurringTotal,
+      tone:
+        "border-transparent bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25",
+      text: "text-white",
+      subtext: "text-white/80",
+    },
+  ] as const;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -46,42 +77,23 @@ export default async function ExpensesPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Recurring
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${recurringTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Non-Recurring
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${nonRecurringTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
+        {expenseCards.map((card) => (
+          <Card
+            key={card.title}
+            className={`overflow-hidden rounded-[1.4rem] border ${card.tone}`}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className={`text-sm font-medium ${card.subtext}`}>
+                {card.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-center text-[clamp(1.35rem,4vw,2.35rem)] font-bold leading-tight tracking-tight sm:text-left ${card.text}`}>
+                {formatExpenseAmount(card.value)}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
