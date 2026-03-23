@@ -233,7 +233,7 @@ export function AccountList({
       </Card>
 
       <Tabs defaultValue={defaultTab} className="space-y-0">
-        <TabsList className="!flex !h-auto w-full items-stretch gap-3 overflow-x-auto bg-transparent p-0 pb-2 md:!grid md:grid-cols-3 md:overflow-visible md:pb-0">
+        <TabsList className="!grid !h-auto w-full grid-cols-3 items-stretch gap-2 bg-transparent p-0 sm:gap-3">
           {groupedAccounts.map(({ category, items, total }) => {
             const Icon = category.icon;
 
@@ -241,21 +241,21 @@ export function AccountList({
               <TabsTrigger
                 key={category.key}
                 value={category.key}
-                className={`min-w-[220px] flex-1 rounded-[1.35rem] border border-slate-200/80 bg-white/92 px-4 py-4 whitespace-normal shadow-[0_12px_28px_-24px_rgba(15,23,42,0.32)] backdrop-blur-sm transition-[box-shadow,border-color,background-color] hover:shadow-[0_16px_34px_-28px_rgba(15,23,42,0.36)] data-[state=active]:shadow-[0_18px_38px_-30px_rgba(14,116,144,0.3)] md:min-w-0 md:px-5 md:py-4 ${category.tabTone}`}
+                className={`min-w-0 rounded-[1.15rem] border border-slate-200/80 bg-white/92 px-2 py-3 whitespace-normal shadow-[0_12px_28px_-24px_rgba(15,23,42,0.32)] backdrop-blur-sm transition-[box-shadow,border-color,background-color] hover:shadow-[0_16px_34px_-28px_rgba(15,23,42,0.36)] data-[state=active]:shadow-[0_18px_38px_-30px_rgba(14,116,144,0.3)] sm:rounded-[1.35rem] sm:px-3 sm:py-3 md:px-5 md:py-4 ${category.tabTone}`}
               >
-                <div className="flex w-full items-center gap-3 text-left">
-                  <div className="rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-black/5">
-                      <Icon className="h-4 w-4 md:h-5 md:w-5" />
+                <div className="flex w-full flex-col items-center gap-2 text-center sm:items-start sm:text-left">
+                  <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-black/5 sm:p-2.5">
+                      <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold leading-tight text-slate-950 md:text-base">
+                  <div className="min-w-0 w-full">
+                    <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-slate-950 sm:text-xs md:text-base">
                         {category.title}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm md:px-3 md:py-1.5 md:text-xs">
-                      {items.length} {items.length === 1 ? "account" : "accounts"}
+                    <div className="mt-2 flex flex-col items-center gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-700 shadow-sm sm:px-2.5 md:px-3 md:py-1.5 md:text-xs">
+                      {items.length} {items.length === 1 ? "acct" : "accts"}
                       </span>
-                      <span className="rounded-full bg-slate-950 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm md:px-3 md:py-1.5 md:text-xs">
+                      <span className="max-w-full rounded-full bg-slate-950 px-2 py-1 text-[10px] font-semibold text-white shadow-sm sm:px-2.5 md:px-3 md:py-1.5 md:text-xs">
                       {formatCurrency(total, baseCurrency)}
                       </span>
                     </div>
