@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: [
+    "@track-my-worth/domain",
+    "@track-my-worth/api-client",
+    "@track-my-worth/config",
+  ],
 };
 
 export default nextConfig;

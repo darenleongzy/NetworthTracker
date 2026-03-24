@@ -15,6 +15,7 @@
 /test-results/
 /playwright-report/
 /playwright/.cache/
+/.playwright-cli/
 
 # next.js
 /.next/
@@ -42,6 +43,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# expo / mobile
+apps/mobile/.expo/
+apps/mobile/node_modules/
+apps/mobile/dist/
+apps/mobile/web-build/
 
 # supabase
 supabase/.temp/
