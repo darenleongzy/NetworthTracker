@@ -40,10 +40,12 @@ export function ChipSelector<T extends string>({
   options,
   value,
   onChange,
+  testID,
 }: {
   options: { label: string; value: T }[];
   value: T;
   onChange: (value: T) => void;
+  testID?: string;
 }) {
   return (
     <View style={styles.chipRow}>
@@ -52,6 +54,8 @@ export function ChipSelector<T extends string>({
         return (
           <Pressable
             key={option.value}
+            testID={testID ? `${testID}-${option.value}` : undefined}
+            accessibilityLabel={option.label}
             style={[
               styles.chip,
               selected && styles.chipActive,
@@ -73,14 +77,20 @@ export function PrimaryButton({
   onPress,
   disabled,
   tone = "primary",
+  testID,
+  accessibilityLabel,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   tone?: "primary" | "danger" | "neutral";
+  testID?: string;
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
+      testID={testID}
+      accessibilityLabel={accessibilityLabel ?? label}
       style={[
         styles.button,
         tone === "danger"

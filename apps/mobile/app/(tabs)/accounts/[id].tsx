@@ -21,6 +21,10 @@ import { Screen } from "@/src/components/screen";
 import { useAsyncResource } from "@/src/hooks/use-async-resource";
 import { mobileApi } from "@/src/lib/api";
 
+const isE2EEnabled = Boolean(
+  process.env.EXPO_PUBLIC_E2E_TEST_EMAIL && process.env.EXPO_PUBLIC_E2E_TEST_PASSWORD
+);
+
 export default function AccountDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const resource = useAsyncResource(async () => {
@@ -64,7 +68,9 @@ export default function AccountDetailScreen() {
     frs_met_for_ma_overflow: DEFAULT_CPF_ACCOUNT_SETTINGS.frs_met_for_ma_overflow,
   });
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [projectionYears, setProjectionYears] = useState("7");
 
   const baseCurrency = resource.data?.preferences.base_currency ?? "USD";
   const account = resource.data?.account;
@@ -109,7 +115,7 @@ export default function AccountDetailScreen() {
           earlyRetirementAge: Number(
             cpfForm.early_retirement_age || cpfSettings.early_retirement_age
           ),
-        })
+        }, Number(projectionYears))
       : null;
 
   useEffect(() => {
@@ -139,6 +145,7 @@ export default function AccountDetailScreen() {
   async function runAction(key: string, action: () => Promise<void>) {
     setSavingKey(key);
     setActionError(null);
+    setActionNotice(null);
     try {
       await action();
       await resource.refresh();
@@ -238,6 +245,49 @@ export default function AccountDetailScreen() {
     });
   }
 
+  async function handleApplyE2ECpfScenario() {
+    if (!account || account.type !== "cpf") return;
+
+    setProjectionYears("15");
+    await runAction("cpf-e2e", async () => {
+      await mobileApi.holdings.upsertCpfBalances(account.id, [
+        { label: "OA", balance: 1000 },
+        { label: "SA", balance: 2000 },
+        { label: "MA", balance: 3000 },
+      ]);
+      await mobileApi.cpf.upsertSettings(account.id, {
+        current_age: 35,
+        monthly_salary: 8000,
+        oa_interest_rate: DEFAULT_CPF_ACCOUNT_SETTINGS.oa_interest_rate,
+        sa_interest_rate: DEFAULT_CPF_ACCOUNT_SETTINGS.sa_interest_rate,
+        ma_interest_rate: DEFAULT_CPF_ACCOUNT_SETTINGS.ma_interest_rate,
+        frs_met_for_ma_overflow: false,
+        mortgage_monthly_deduction: 0,
+        mortgage_payoff_age: null,
+        early_retirement_age: 45,
+      });
+    });
+    setActionNotice("E2E CPF scenario applied");
+  }
+
+  async function handleCleanupE2EAccounts() {
+    setSavingKey("cleanup-e2e");
+    setActionError(null);
+    setActionNotice(null);
+    try {
+      const accounts = await mobileApi.accounts.list();
+      const e2eAccounts = accounts.filter((entry) => entry.name.startsWith("Maestro "));
+      for (const entry of e2eAccounts) {
+        await mobileApi.accounts.remove(entry.id);
+      }
+      router.replace("/(tabs)/accounts");
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to clean up E2E accounts");
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
   return (
     <Screen
       title={account?.name ?? "Account"}
@@ -270,9 +320,20 @@ export default function AccountDetailScreen() {
             onPress={handleDeleteAccount}
             disabled={savingKey !== null}
             tone="danger"
+            testID="account-delete-button"
           />
         </View>
         {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
+        {actionNotice ? <Text style={styles.noticeText}>{actionNotice}</Text> : null}
+        {__DEV__ && isE2EEnabled ? (
+          <PrimaryButton
+            label={savingKey === "cleanup-e2e" ? "Cleaning..." : "Cleanup E2E Accounts"}
+            onPress={handleCleanupE2EAccounts}
+            disabled={savingKey !== null}
+            tone="neutral"
+            testID="account-cleanup-e2e-button"
+          />
+        ) : null}
       </SectionCard>
 
       {(account?.type === "cash" || account?.type === "srs") && (
@@ -406,6 +467,8 @@ export default function AccountDetailScreen() {
             {CPF_SUB_ACCOUNTS.map((subAccount) => (
               <Field key={subAccount.value} label={subAccount.label}>
                 <FormInput
+                  testID={`cpf-balance-${subAccount.value}-input`}
+                  accessibilityLabel={`${subAccount.label} balance`}
                   value={cpfBalances[subAccount.value]}
                   onChangeText={(value) =>
                     setCpfBalances((current) => ({
@@ -421,6 +484,7 @@ export default function AccountDetailScreen() {
               label={savingKey === "cpf-balances" ? "Saving..." : "Save CPF balances"}
               onPress={handleSaveCpfBalances}
               disabled={savingKey !== null}
+              testID="cpf-balances-save-button"
             />
           </SectionCard>
 
@@ -430,6 +494,8 @@ export default function AccountDetailScreen() {
           >
             <Field label="Current age">
               <FormInput
+                testID="cpf-current-age-input"
+                accessibilityLabel="Current age"
                 value={cpfForm.current_age}
                 onChangeText={(value) =>
                   setCpfForm((current) => ({ ...current, current_age: value }))
@@ -439,6 +505,8 @@ export default function AccountDetailScreen() {
             </Field>
             <Field label="Monthly salary (SGD)">
               <FormInput
+                testID="cpf-monthly-salary-input"
+                accessibilityLabel="Monthly salary"
                 value={cpfForm.monthly_salary}
                 onChangeText={(value) =>
                   setCpfForm((current) => ({ ...current, monthly_salary: value }))
@@ -450,6 +518,8 @@ export default function AccountDetailScreen() {
               <View style={styles.inlineField}>
                 <Field label="OA interest %">
                   <FormInput
+                    testID="cpf-oa-interest-input"
+                    accessibilityLabel="OA interest rate"
                     value={cpfForm.oa_interest_rate}
                     onChangeText={(value) =>
                       setCpfForm((current) => ({ ...current, oa_interest_rate: value }))
@@ -461,6 +531,8 @@ export default function AccountDetailScreen() {
               <View style={styles.inlineField}>
                 <Field label="SA interest %">
                   <FormInput
+                    testID="cpf-sa-interest-input"
+                    accessibilityLabel="SA interest rate"
                     value={cpfForm.sa_interest_rate}
                     onChangeText={(value) =>
                       setCpfForm((current) => ({ ...current, sa_interest_rate: value }))
@@ -472,6 +544,8 @@ export default function AccountDetailScreen() {
               <View style={styles.inlineField}>
                 <Field label="MA interest %">
                   <FormInput
+                    testID="cpf-ma-interest-input"
+                    accessibilityLabel="MA interest rate"
                     value={cpfForm.ma_interest_rate}
                     onChangeText={(value) =>
                       setCpfForm((current) => ({ ...current, ma_interest_rate: value }))
@@ -483,6 +557,8 @@ export default function AccountDetailScreen() {
             </View>
             <Field label="Mortgage deduction (SGD)">
               <FormInput
+                testID="cpf-mortgage-deduction-input"
+                accessibilityLabel="Mortgage deduction"
                 value={cpfForm.mortgage_monthly_deduction}
                 onChangeText={(value) =>
                   setCpfForm((current) => ({
@@ -495,6 +571,8 @@ export default function AccountDetailScreen() {
             </Field>
             <Field label="Mortgage payoff age">
               <FormInput
+                testID="cpf-mortgage-payoff-age-input"
+                accessibilityLabel="Mortgage payoff age"
                 value={cpfForm.mortgage_payoff_age}
                 onChangeText={(value) =>
                   setCpfForm((current) => ({ ...current, mortgage_payoff_age: value }))
@@ -505,6 +583,8 @@ export default function AccountDetailScreen() {
             </Field>
             <Field label="Early retirement age">
               <FormInput
+                testID="cpf-early-retirement-age-input"
+                accessibilityLabel="Early retirement age"
                 value={cpfForm.early_retirement_age}
                 onChangeText={(value) =>
                   setCpfForm((current) => ({ ...current, early_retirement_age: value }))
@@ -514,6 +594,7 @@ export default function AccountDetailScreen() {
             </Field>
             <Field label="MA overflow after 55">
               <ChipSelector
+                testID="cpf-ma-overflow"
                 value={cpfForm.frs_met_for_ma_overflow ? "oa" : "ra"}
                 onChange={(value) =>
                   setCpfForm((current) => ({
@@ -531,7 +612,18 @@ export default function AccountDetailScreen() {
               label={savingKey === "cpf-settings" ? "Saving..." : "Save CPF settings"}
               onPress={handleSaveCpfSettings}
               disabled={savingKey !== null}
+              testID="cpf-settings-save-button"
             />
+            {__DEV__ && isE2EEnabled ? (
+              <PrimaryButton
+                label="Apply E2E CPF Scenario"
+                onPress={handleApplyE2ECpfScenario}
+                disabled={savingKey !== null}
+                tone="neutral"
+                testID="cpf-apply-e2e-button"
+              />
+            ) : null}
+            {actionNotice ? <Text style={styles.noticeText}>{actionNotice}</Text> : null}
           </SectionCard>
         </>
       )}
@@ -539,23 +631,83 @@ export default function AccountDetailScreen() {
       {cpfProjection ? (
         <SectionCard
           title="CPF Projection"
-          subtitle="Current contributions, 7-year outlook, and early retirement estimate"
+          subtitle="Adjust the horizon and compare projected CPF balances over time"
         >
+          <Field label="Projection horizon">
+            <ChipSelector
+              testID="cpf-projection-years"
+              value={projectionYears}
+              onChange={setProjectionYears}
+              options={[
+                { label: "7y", value: "7" },
+                { label: "15y", value: "15" },
+                { label: "25y", value: "25" },
+                { label: "40y", value: "40" },
+              ]}
+            />
+          </Field>
+          <View style={styles.summaryGrid}>
+            <View style={[styles.summaryCard, styles.summaryBlue]}>
+              <Text style={styles.summaryLabel}>Monthly CPF</Text>
+              <Text style={styles.summaryValue}>
+                {formatCurrency(cpfProjection.currentBreakdown.totalContribution, "SGD")}
+              </Text>
+              <Text style={styles.summaryHint}>
+                OA {formatCurrency(cpfProjection.currentBreakdown.oaContribution, "SGD")} ·
+                {` `}
+                {cpfProjection.currentBreakdown.middleAccountLabel}{" "}
+                {formatCurrency(cpfProjection.currentBreakdown.middleContribution, "SGD")}
+              </Text>
+            </View>
+            <View style={[styles.summaryCard, styles.summaryAmber]}>
+              <Text style={styles.summaryLabel}>{projectionYears}-Year Total</Text>
+              <Text style={styles.summaryValue}>
+                {formatCurrency(cpfProjection.sevenYearProjection.totalBalance, "SGD")}
+              </Text>
+              <Text style={styles.summaryHint}>
+                Interest {formatCurrency(cpfProjection.sevenYearProjection.totalInterestEarned, "SGD")}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.muted}>
-            Monthly CPF contribution:{" "}
-            {formatCurrency(cpfProjection.currentBreakdown.totalContribution, "SGD")}
+            Projected age: {cpfProjection.sevenYearProjection.ageAtEnd}
           </Text>
-          <Text style={styles.muted}>
-            Projection total:{" "}
-            {formatCurrency(cpfProjection.sevenYearProjection.totalBalance, "SGD")}
-          </Text>
-          <Text style={styles.muted}>
-            Early retirement total:{" "}
-            {formatCurrency(
-              cpfProjection.earlyRetirementProjection.totalBalance,
-              "SGD"
-            )}
-          </Text>
+          <View style={styles.summaryGrid}>
+            <View style={styles.balancePill}>
+              <Text style={styles.balanceLabel}>OA</Text>
+              <Text style={styles.balanceValue}>
+                {formatCurrency(cpfProjection.sevenYearProjection.balances.oa, "SGD")}
+              </Text>
+            </View>
+            <View style={styles.balancePill}>
+              <Text style={styles.balanceLabel}>SA</Text>
+              <Text style={styles.balanceValue}>
+                {formatCurrency(cpfProjection.sevenYearProjection.balances.sa, "SGD")}
+              </Text>
+            </View>
+            <View style={styles.balancePill}>
+              <Text style={styles.balanceLabel}>MA</Text>
+              <Text style={styles.balanceValue}>
+                {formatCurrency(cpfProjection.sevenYearProjection.balances.ma, "SGD")}
+              </Text>
+            </View>
+            <View style={styles.balancePill}>
+              <Text style={styles.balanceLabel}>RA</Text>
+              <Text style={styles.balanceValue}>
+                {formatCurrency(cpfProjection.sevenYearProjection.balances.retirement, "SGD")}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.summaryCard, styles.summaryTeal]}>
+            <Text style={styles.summaryLabel}>Early retirement projection</Text>
+            <Text style={styles.summaryValue}>
+              {formatCurrency(cpfProjection.earlyRetirementProjection.totalBalance, "SGD")}
+            </Text>
+            <Text style={styles.summaryHint}>
+              Age {cpfProjection.earlyRetirementProjection.ageAtEnd} · Mortgage used{" "}
+              {formatCurrency(cpfProjection.earlyRetirementProjection.totalMortgageDeducted, "SGD")}
+            </Text>
+          </View>
         </SectionCard>
       ) : null}
     </Screen>
@@ -611,5 +763,64 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 13,
     color: "#b91c1c",
+  },
+  noticeText: {
+    fontSize: 13,
+    color: appTheme.colors.primaryDeep,
+    fontWeight: "600",
+  },
+  summaryGrid: {
+    gap: appTheme.spacing.sm,
+  },
+  summaryCard: {
+    borderRadius: 18,
+    padding: 14,
+    gap: 4,
+  },
+  summaryBlue: {
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+  },
+  summaryAmber: {
+    backgroundColor: "#fff7ed",
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+  },
+  summaryTeal: {
+    backgroundColor: "#f0fdfa",
+    borderWidth: 1,
+    borderColor: "#99f6e4",
+  },
+  summaryLabel: {
+    fontSize: 13,
+    color: appTheme.colors.textMuted,
+    fontWeight: "600",
+  },
+  summaryValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: appTheme.colors.text,
+  },
+  summaryHint: {
+    fontSize: 12,
+    color: appTheme.colors.textMuted,
+  },
+  balancePill: {
+    borderRadius: 16,
+    padding: 12,
+    backgroundColor: appTheme.colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+  },
+  balanceLabel: {
+    fontSize: 12,
+    color: appTheme.colors.textMuted,
+    marginBottom: 4,
+  },
+  balanceValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: appTheme.colors.text,
   },
 });

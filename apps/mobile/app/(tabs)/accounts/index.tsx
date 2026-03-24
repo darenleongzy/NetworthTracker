@@ -4,7 +4,7 @@ import {
   formatCurrency,
   type AccountType,
 } from "@track-my-worth/domain";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useMemo, useState } from "react";
 import { appTheme } from "@track-my-worth/config";
@@ -23,6 +23,10 @@ import {
   buildMobileAccountGroups,
   type MobileAccountCategoryKey,
 } from "@/src/lib/mobile-helpers";
+
+const isE2EEnabled = Boolean(
+  process.env.EXPO_PUBLIC_E2E_TEST_EMAIL && process.env.EXPO_PUBLIC_E2E_TEST_PASSWORD
+);
 
 export default function AccountsScreen() {
   const resource = useAsyncResource(async () => {
@@ -85,6 +89,49 @@ export default function AccountsScreen() {
     }
   }
 
+  async function handleCreateE2EAccount(
+    type: AccountType,
+    name: string,
+    navigateToDetail = false
+  ) {
+    setSaving(true);
+    setSubmitError(null);
+    try {
+      const createdAccount = await mobileApi.accounts.create(name, type);
+      setActiveCategory(
+        MOBILE_ACCOUNT_CATEGORIES.find((category) => category.types.includes(type))?.key ??
+          "brokerage"
+      );
+      await resource.refresh();
+      if (navigateToDetail) {
+        router.push(`/(tabs)/accounts/${createdAccount.id}`);
+      }
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Unable to create account");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCleanupE2EAccounts() {
+    setSaving(true);
+    setSubmitError(null);
+    try {
+      const accounts = await mobileApi.accounts.list();
+      const e2eAccounts = accounts.filter((account) =>
+        account.name.startsWith("Maestro ")
+      );
+      for (const account of e2eAccounts) {
+        await mobileApi.accounts.remove(account.id);
+      }
+      await resource.refresh();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Unable to clean up E2E accounts");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <Screen
       title="Accounts"
@@ -100,6 +147,8 @@ export default function AccountsScreen() {
       >
         <Field label="Account name">
           <FormInput
+            testID="create-account-name-input"
+            accessibilityLabel="Account name"
             value={draftName}
             onChangeText={setDraftName}
             placeholder="DBS Multiplier"
@@ -107,6 +156,7 @@ export default function AccountsScreen() {
         </Field>
         <Field label="Account type">
           <ChipSelector
+            testID="create-account-type"
             value={draftType}
             onChange={setDraftType}
             options={[
@@ -122,13 +172,44 @@ export default function AccountsScreen() {
           label={saving ? "Creating..." : "Create account"}
           onPress={handleCreateAccount}
           disabled={saving}
+          testID="create-account-submit-button"
         />
+        {__DEV__ && isE2EEnabled ? (
+          <View style={styles.e2eRow}>
+            <PrimaryButton
+              label="Create E2E Cash"
+              onPress={() =>
+                handleCreateE2EAccount("cash", "Maestro Cash Account", true)
+              }
+              disabled={saving}
+              tone="neutral"
+              testID="create-e2e-cash-account-button"
+            />
+            <PrimaryButton
+              label="Create E2E CPF"
+              onPress={() =>
+                handleCreateE2EAccount("cpf", "Maestro CPF Account", true)
+              }
+              disabled={saving}
+              tone="neutral"
+              testID="create-e2e-cpf-account-button"
+            />
+            <PrimaryButton
+              label="Cleanup E2E Accounts"
+              onPress={handleCleanupE2EAccounts}
+              disabled={saving}
+              tone="neutral"
+              testID="cleanup-e2e-accounts-button"
+            />
+          </View>
+        ) : null}
       </SectionCard>
 
       <View style={styles.segmentRow}>
         {grouped.map((group) => (
           <Pressable
             key={group.key}
+            testID={`account-category-${group.key}`}
             style={[
               styles.segment,
               activeCategory === group.key && {
@@ -175,7 +256,11 @@ export default function AccountsScreen() {
           const total = cashTotal + stockTotal;
           return (
             <Link key={account.id} href={`/(tabs)/accounts/${account.id}`} asChild>
-              <Pressable style={styles.card}>
+              <Pressable
+                testID={`account-card-${account.id}`}
+                accessibilityLabel={`Open account ${account.name}`}
+                style={styles.card}
+              >
                 <View style={styles.row}>
                   <Text style={styles.name}>{account.name}</Text>
                   <Text style={styles.badge}>{account.type.toUpperCase()}</Text>
@@ -261,5 +346,10 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 13,
     color: "#b91c1c",
+  },
+  e2eRow: {
+    flexDirection: "row",
+    gap: appTheme.spacing.sm,
+    flexWrap: "wrap",
   },
 });

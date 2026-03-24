@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Track My Worth"
+    file: ../subflows/open-expo-project.yaml
+- waitForAnimationToEnd
+- runFlow: ../subflows/dismiss-developer-tools.yaml
+- runFlow:
+    when:
+      visible: "Welcome back"
+    file: ../subflows/login.yaml
+- assertVisible: "Dashboard"
+- runFlow: ../subflows/check-fire-tab.yaml

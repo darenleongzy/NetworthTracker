@@ -14,6 +14,7 @@ import {
   FormInput,
   PrimaryButton,
 } from "@/src/components/form-ui";
+import { LineChart } from "@/src/components/line-chart";
 import { ProgressMeter } from "@/src/components/progress-meter";
 import { Screen } from "@/src/components/screen";
 import { SectionCard } from "@/src/components/section-card";
@@ -21,6 +22,10 @@ import { StatCard } from "@/src/components/stat-card";
 import { useAsyncResource } from "@/src/hooks/use-async-resource";
 import { mobileApi } from "@/src/lib/api";
 import { mergeMobileFireSettings } from "@/src/lib/mobile-helpers";
+
+const isE2EEnabled = Boolean(
+  process.env.EXPO_PUBLIC_E2E_TEST_EMAIL && process.env.EXPO_PUBLIC_E2E_TEST_PASSWORD
+);
 
 export default function FireScreen() {
   const resource = useAsyncResource(async () => {
@@ -119,6 +124,7 @@ export default function FireScreen() {
   });
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!resource.data?.fireSettings) return;
@@ -138,6 +144,7 @@ export default function FireScreen() {
   async function handleSaveSettings() {
     setSaving(true);
     setActionError(null);
+    setActionNotice(null);
     try {
       await mobileApi.fire.updateSettings({
         fire_current_age: Number(form.fire_current_age || 0),
@@ -151,6 +158,31 @@ export default function FireScreen() {
         fire_manual_savings: Number(form.fire_manual_savings || 0),
       });
       await resource.refresh();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to save FIRE settings");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleApplyE2ESettings() {
+    setSaving(true);
+    setActionError(null);
+    setActionNotice(null);
+    try {
+      await mobileApi.fire.updateSettings({
+        fire_current_age: 35,
+        fire_swr: 4,
+        fire_growth_rate: 7,
+        fire_inflation_rate: 3,
+        fire_include_cpf_srs: true,
+        fire_expense_mode: "manual",
+        fire_manual_expenses: 3000,
+        fire_savings_mode: "manual",
+        fire_manual_savings: 2500,
+      });
+      await resource.refresh();
+      setActionNotice("E2E FIRE scenario applied");
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Unable to save FIRE settings");
     } finally {
@@ -191,6 +223,8 @@ export default function FireScreen() {
       >
         <Field label="Current age">
           <FormInput
+            testID="fire-current-age-input"
+            accessibilityLabel="FIRE current age"
             value={form.fire_current_age}
             onChangeText={(value) => setForm((current) => ({ ...current, fire_current_age: value }))}
             keyboardType="number-pad"
@@ -198,6 +232,8 @@ export default function FireScreen() {
         </Field>
         <Field label="SWR %">
           <FormInput
+            testID="fire-swr-input"
+            accessibilityLabel="FIRE safe withdrawal rate"
             value={form.fire_swr}
             onChangeText={(value) => setForm((current) => ({ ...current, fire_swr: value }))}
             keyboardType="decimal-pad"
@@ -205,6 +241,8 @@ export default function FireScreen() {
         </Field>
         <Field label="Growth rate %">
           <FormInput
+            testID="fire-growth-rate-input"
+            accessibilityLabel="FIRE growth rate"
             value={form.fire_growth_rate}
             onChangeText={(value) =>
               setForm((current) => ({ ...current, fire_growth_rate: value }))
@@ -214,6 +252,8 @@ export default function FireScreen() {
         </Field>
         <Field label="Inflation rate %">
           <FormInput
+            testID="fire-inflation-rate-input"
+            accessibilityLabel="FIRE inflation rate"
             value={form.fire_inflation_rate}
             onChangeText={(value) =>
               setForm((current) => ({ ...current, fire_inflation_rate: value }))
@@ -223,6 +263,7 @@ export default function FireScreen() {
         </Field>
         <Field label="Include CPF / SRS">
           <ChipSelector
+            testID="fire-include-cpf-srs"
             value={form.fire_include_cpf_srs ? "yes" : "no"}
             onChange={(value) =>
               setForm((current) => ({ ...current, fire_include_cpf_srs: value === "yes" }))
@@ -235,6 +276,7 @@ export default function FireScreen() {
         </Field>
         <Field label="Expense mode">
           <ChipSelector
+            testID="fire-expense-mode"
             value={form.fire_expense_mode}
             onChange={(value) =>
               setForm((current) => ({ ...current, fire_expense_mode: value }))
@@ -248,6 +290,8 @@ export default function FireScreen() {
         {form.fire_expense_mode === "manual" ? (
           <Field label="Manual monthly expenses">
             <FormInput
+              testID="fire-manual-expenses-input"
+              accessibilityLabel="Manual monthly expenses"
               value={form.fire_manual_expenses}
               onChangeText={(value) =>
                 setForm((current) => ({ ...current, fire_manual_expenses: value }))
@@ -263,6 +307,7 @@ export default function FireScreen() {
         )}
         <Field label="Savings mode">
           <ChipSelector
+            testID="fire-savings-mode"
             value={form.fire_savings_mode}
             onChange={(value) =>
               setForm((current) => ({ ...current, fire_savings_mode: value }))
@@ -276,6 +321,8 @@ export default function FireScreen() {
         {form.fire_savings_mode === "manual" ? (
           <Field label="Manual monthly savings">
             <FormInput
+              testID="fire-manual-savings-input"
+              accessibilityLabel="Manual monthly savings"
               value={form.fire_manual_savings}
               onChangeText={(value) =>
                 setForm((current) => ({ ...current, fire_manual_savings: value }))
@@ -285,11 +332,22 @@ export default function FireScreen() {
           </Field>
         ) : null}
         {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
+        {actionNotice ? <Text style={styles.noticeText}>{actionNotice}</Text> : null}
         <PrimaryButton
           label={saving ? "Saving..." : "Save FIRE settings"}
           onPress={handleSaveSettings}
           disabled={saving}
+          testID="fire-save-button"
         />
+        {__DEV__ && isE2EEnabled ? (
+          <PrimaryButton
+            label="Apply E2E FIRE Scenario"
+            onPress={handleApplyE2ESettings}
+            disabled={saving}
+            tone="neutral"
+            testID="fire-apply-e2e-button"
+          />
+        ) : null}
       </SectionCard>
 
       <SectionCard
@@ -309,6 +367,31 @@ export default function FireScreen() {
         </Text>
         <Text style={styles.panelText}>
           CPF/SRS included: {resource.data?.includeCpfSrs ? "Yes" : "No"}
+        </Text>
+        <Text style={styles.panelText}>
+          Monthly withdrawal now:{" "}
+          {formatCurrency(resource.data?.metrics.monthlyWithdrawal ?? 0, resource.data?.baseCurrency)}
+        </Text>
+        <Text style={styles.panelText}>
+          Income gap: {formatCurrency(resource.data?.metrics.incomeGap ?? 0, resource.data?.baseCurrency)}
+        </Text>
+      </SectionCard>
+
+      <SectionCard
+        title="Projection Chart"
+        subtitle="Net worth trend against your FIRE target"
+      >
+        <LineChart
+          points={
+            resource.data?.projection.map((point) => ({
+              label: `Age ${point.age}`,
+              value: point.netWorth,
+            })) ?? []
+          }
+          color={appTheme.colors.accentEmerald}
+        />
+        <Text style={styles.panelText}>
+          FIRE target today: {formatCurrency(resource.data?.metrics.fireNumber ?? 0, resource.data?.baseCurrency)}
         </Text>
       </SectionCard>
 
@@ -354,5 +437,10 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 13,
     color: "#b91c1c",
+  },
+  noticeText: {
+    fontSize: 13,
+    color: appTheme.colors.primaryDeep,
+    fontWeight: "600",
   },
 });

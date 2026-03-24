@@ -2,6 +2,10 @@ import React from "react";
 import { vi } from "vitest";
 
 vi.mock("react-native", () => {
+  type MockChildrenProps = {
+    children?: React.ReactNode;
+  } & Record<string, unknown>;
+
   function normalizeProps(props: Record<string, unknown>) {
     const { style, placeholderTextColor, onPress, onChangeText, ...rest } = props;
 
@@ -19,9 +23,9 @@ vi.mock("react-native", () => {
   const createWrapper = (tag: "div" | "span" | "button" | "input") =>
     React.forwardRef<
       HTMLElement,
-      Record<string, unknown> & { children?: React.ReactNode }
-    >(({ children, ...props }, ref) =>
-      React.createElement(tag, { ...normalizeProps(props), ref }, children)
+      MockChildrenProps
+    >(({ children, ...props }: MockChildrenProps, ref) =>
+      React.createElement(tag, { ...normalizeProps(props), ref }, children as React.ReactNode)
     );
 
   const TextInput = React.forwardRef<
@@ -30,7 +34,17 @@ vi.mock("react-native", () => {
       value?: string;
       onChangeText?: (value: string) => void;
     }
-  >(({ onChangeText, ...props }, ref) =>
+  >(
+    (
+      {
+        onChangeText,
+        ...props
+      }: Record<string, unknown> & {
+        value?: string;
+        onChangeText?: (value: string) => void;
+      },
+      ref
+    ) =>
     React.createElement("input", {
       ...normalizeProps(props),
       ref,
@@ -38,7 +52,7 @@ vi.mock("react-native", () => {
         const target = event.target as HTMLInputElement;
         onChangeText?.(target.value);
       },
-    })
+      })
   );
 
   return {
@@ -46,7 +60,7 @@ vi.mock("react-native", () => {
     Text: createWrapper("span"),
     Pressable: React.forwardRef<
       HTMLButtonElement,
-      Record<string, unknown> & {
+      MockChildrenProps & {
         children?: React.ReactNode;
         onPress?: () => void;
       }
@@ -54,7 +68,7 @@ vi.mock("react-native", () => {
       React.createElement(
         "button",
         { ...normalizeProps({ ...props, onPress }), ref },
-        children
+        children as React.ReactNode
       )
     ),
     TextInput,

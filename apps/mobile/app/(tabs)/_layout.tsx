@@ -22,6 +22,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Dashboard",
+          tabBarButtonTestID: "tab-dashboard",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" color={color} size={size} />
           ),
@@ -31,6 +32,7 @@ export default function TabsLayout() {
         name="accounts"
         options={{
           title: "Accounts",
+          tabBarButtonTestID: "tab-accounts",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="wallet-outline" color={color} size={size} />
           ),
@@ -40,6 +42,7 @@ export default function TabsLayout() {
         name="expenses"
         options={{
           title: "Expenses",
+          tabBarButtonTestID: "tab-expenses",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="receipt-outline" color={color} size={size} />
           ),
@@ -49,6 +52,7 @@ export default function TabsLayout() {
         name="fire"
         options={{
           title: "FIRE",
+          tabBarButtonTestID: "tab-fire",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="flame-outline" color={color} size={size} />
           ),
@@ -58,6 +62,7 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: "Settings",
+          tabBarButtonTestID: "tab-settings",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" color={color} size={size} />
           ),

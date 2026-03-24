@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: "tab-accounts"
+- assertVisible: "Add Account"
+- tapOn:
+    id: "create-e2e-cash-account-button"
+- extendedWaitUntil:
+    visible: "Account Actions"
+    timeout: 20000
+- tapOn:
+    id: "account-cleanup-e2e-button"
+- extendedWaitUntil:
+    visible: "Add Account"
+    timeout: 20000

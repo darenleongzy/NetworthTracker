@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: "tab-accounts"
+- assertVisible: "Add Account"
+- tapOn:
+    id: "create-e2e-cpf-account-button"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: "cpf-apply-e2e-button"
+    direction: DOWN
+- tapOn:
+    id: "cpf-apply-e2e-button"
+- waitForAnimationToEnd
+- tapOn: "Delete account"
+- extendedWaitUntil:
+    visible: "Add Account"
+    timeout: 20000

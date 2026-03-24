@@ -10,6 +10,7 @@ import {
   type ExpenseCategory,
   type ExpenseSubcategory,
   type FireSettings,
+  type NetWorthSnapshot,
   type StockPriceData,
   type UserPreferences,
 } from "@track-my-worth/domain";
@@ -87,13 +88,19 @@ export function createTrackMyWorthApiClient(supabase: SupabaseClient) {
       async getBootstrapData() {
         const userId = await requireUserId(supabase);
 
-        const [accountsRes, expensesRes, preferences, fireSettings] =
+        const [accountsRes, snapshotsRes, expensesRes, preferences, fireSettings] =
           await Promise.all([
             supabase
               .from("accounts")
               .select("*, cash_holdings(*), stock_holdings(*)")
               .eq("user_id", userId)
               .order("created_at"),
+            supabase
+              .from("net_worth_snapshots")
+              .select("*")
+              .eq("user_id", userId)
+              .order("snapshot_date", { ascending: true })
+              .limit(90),
             supabase
               .from("expenses")
               .select("*")
@@ -104,10 +111,12 @@ export function createTrackMyWorthApiClient(supabase: SupabaseClient) {
           ]);
 
         if (accountsRes.error) throw new Error(accountsRes.error.message);
+        if (snapshotsRes.error) throw new Error(snapshotsRes.error.message);
         if (expensesRes.error) throw new Error(expensesRes.error.message);
 
         return {
           accounts: (accountsRes.data ?? []) as AccountWithHoldings[],
+          snapshots: (snapshotsRes.data ?? []) as NetWorthSnapshot[],
           expenses: (expensesRes.data ?? []) as Expense[],
           preferences,
           fireSettings,

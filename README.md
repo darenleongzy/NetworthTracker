@@ -24,6 +24,23 @@ Run the mobile app:
 npm run mobile:dev
 ```
 
+Run mobile E2E flows with Maestro after the app is already open on an iOS
+simulator or device:
+
+```bash
+npm run mobile:e2e
+```
+
+You can also run individual flows:
+
+```bash
+npm run mobile:e2e:login
+npm run mobile:e2e:account
+npm run mobile:e2e:expense
+npm run mobile:e2e:cpf
+npm run mobile:e2e:fire
+```
+
 Key workspace layout:
 
 ```text
@@ -59,11 +76,26 @@ cd apps/mobile
 npx expo start --clear
 ```
 
+For Expo Go login automation on iOS, add these optional values to
+`apps/mobile/.env.local` and restart Expo:
+
+- `EXPO_PUBLIC_E2E_TEST_EMAIL`
+- `EXPO_PUBLIC_E2E_TEST_PASSWORD`
+
+When they are present, the mobile login screen shows a dev-only `Use E2E Credentials`
+button that Maestro can tap before signing in.
+
+By default the Maestro flows target Expo Go on iOS with `host.exp.Exponent`.
+You can override that by setting `MAESTRO_APP_ID` before running the test
+command if you are using a custom dev build.
+
 Troubleshooting:
 
 - `Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY for mobile app.`
   means `apps/mobile/.env.local` is missing those values, or Expo was not
   restarted after the file changed.
+- If Maestro cannot find your app, make sure the mobile app is already open on
+  the simulator or device before running `npm run mobile:e2e`.
 
 ## Learn More
 

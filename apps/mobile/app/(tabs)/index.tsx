@@ -1,5 +1,6 @@
 import {
   calculateCashTotal,
+  calculateInvestmentCost,
   calculateInvestmentValue,
   formatCurrency,
   getCurrentMonthExpenses,
@@ -7,11 +8,13 @@ import {
 import { StyleSheet, Text, View } from "react-native";
 import { appTheme } from "@track-my-worth/config";
 import { DonutChart } from "@/src/components/donut-chart";
+import { LineChart } from "@/src/components/line-chart";
 import { Screen } from "@/src/components/screen";
 import { SectionCard } from "@/src/components/section-card";
 import { StatCard } from "@/src/components/stat-card";
 import { useAsyncResource } from "@/src/hooks/use-async-resource";
 import { mobileApi } from "@/src/lib/api";
+import { buildMobileTrendSeries } from "@/src/lib/mobile-helpers";
 
 export default function DashboardScreen() {
   const resource = useAsyncResource(async () => {
@@ -45,29 +48,37 @@ export default function DashboardScreen() {
       data.preferences.base_currency,
       exchangeRates
     );
+    const allStockHoldings = data.accounts.flatMap((account) => account.stock_holdings);
     const investmentValue = calculateInvestmentValue(
-      data.accounts.flatMap((account) => account.stock_holdings),
+      allStockHoldings,
       stockPrices,
       data.preferences.base_currency,
       exchangeRates
     );
+    const investmentCost = calculateInvestmentCost(allStockHoldings);
+    const currentMonthExpenses = getCurrentMonthExpenses(data.expenses);
+    const netWorth =
+      cashTotal + cpfTotal + srsTotal + investmentValue;
 
     return {
       ...data,
+      exchangeRates,
+      stockPrices,
       cashTotal,
       cpfTotal,
       srsTotal,
       investmentValue,
-      currentMonthExpenses: getCurrentMonthExpenses(data.expenses),
+      investmentCost,
+      netWorth,
+      currentMonthExpenses,
+      trendSeries: buildMobileTrendSeries(data.snapshots, {
+        snapshot_date: new Date().toISOString().slice(0, 10),
+        total_value: netWorth,
+      }),
     };
   }, []);
 
   const baseCurrency = resource.data?.preferences.base_currency ?? "USD";
-  const netWorth =
-    (resource.data?.cashTotal ?? 0) +
-    (resource.data?.cpfTotal ?? 0) +
-    (resource.data?.srsTotal ?? 0) +
-    (resource.data?.investmentValue ?? 0);
   const currentMonthTotal =
     resource.data?.currentMonthExpenses.reduce(
       (sum, expense) => sum + Number(expense.amount),
@@ -96,6 +107,29 @@ export default function DashboardScreen() {
     },
   ];
   const recentExpenses = resource.data?.currentMonthExpenses.slice(0, 4) ?? [];
+  const topAccounts = (resource.data?.accounts ?? [])
+    .map((account) => {
+      const cashTotal = calculateCashTotal(
+        account.cash_holdings,
+        baseCurrency,
+        resource.data?.exchangeRates ?? {}
+      );
+      const stockTotal = calculateInvestmentValue(
+        account.stock_holdings,
+        resource.data?.stockPrices ?? {},
+        baseCurrency,
+        resource.data?.exchangeRates ?? {}
+      );
+      return { ...account, total: cashTotal + stockTotal };
+    })
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
+  const totalGainLoss =
+    (resource.data?.investmentValue ?? 0) - (resource.data?.investmentCost ?? 0);
+  const gainLossPercent =
+    (resource.data?.investmentCost ?? 0) > 0
+      ? (totalGainLoss / (resource.data?.investmentCost ?? 1)) * 100
+      : 0;
 
   return (
     <Screen
@@ -109,7 +143,7 @@ export default function DashboardScreen() {
       <View style={styles.grid}>
         <StatCard
           label="Net Worth"
-          value={formatCurrency(netWorth, baseCurrency)}
+          value={formatCurrency(resource.data?.netWorth ?? 0, baseCurrency)}
           tone="primary"
         />
         <StatCard
@@ -133,30 +167,48 @@ export default function DashboardScreen() {
       </View>
 
       <SectionCard
+        title="Net Worth Trend"
+        subtitle="A compact trend view based on your saved snapshots"
+      >
+        <LineChart
+          points={resource.data?.trendSeries ?? []}
+          color={appTheme.colors.primary}
+        />
+      </SectionCard>
+
+      <SectionCard
         title="Asset Allocation"
         subtitle="A quick read of how your tracked net worth is distributed"
       >
         <DonutChart
           data={allocationData}
-          centerValue={formatCurrency(netWorth, baseCurrency)}
+          centerValue={formatCurrency(resource.data?.netWorth ?? 0, baseCurrency)}
         />
       </SectionCard>
 
       <SectionCard
-        title="Quick Snapshot"
-        subtitle="A read-only view of the latest mobile dashboard totals"
+        title="Investment Performance"
+        subtitle="Current market value versus your recorded cost basis"
       >
         <View style={styles.snapshotGrid}>
           <View style={styles.snapshotItem}>
-            <Text style={styles.snapshotLabel}>Accounts</Text>
+            <Text style={styles.snapshotLabel}>Cost Basis</Text>
             <Text style={styles.snapshotValue}>
-              {resource.data?.accounts.length ?? 0}
+              {formatCurrency(resource.data?.investmentCost ?? 0, "USD")}
             </Text>
           </View>
           <View style={styles.snapshotItem}>
-            <Text style={styles.snapshotLabel}>Expenses</Text>
-            <Text style={styles.snapshotValue}>
-              {resource.data?.expenses.length ?? 0}
+            <Text style={styles.snapshotLabel}>Gain / Loss</Text>
+            <Text
+              style={[
+                styles.snapshotValue,
+                totalGainLoss >= 0 ? styles.positive : styles.negative,
+              ]}
+            >
+              {formatCurrency(totalGainLoss, baseCurrency)}
+            </Text>
+            <Text style={styles.snapshotHint}>
+              {gainLossPercent.toFixed(2)}%
             </Text>
           </View>
           <View style={styles.snapshotItem}>
@@ -169,6 +221,23 @@ export default function DashboardScreen() {
       </SectionCard>
 
       <SectionCard
+        title="Top Holdings Overview"
+        subtitle="Your largest tracked accounts across cash, brokerage, CPF, and SRS"
+      >
+        {topAccounts.map((account) => (
+          <View key={account.id} style={styles.accountRow}>
+            <View>
+              <Text style={styles.expenseTitle}>{account.name}</Text>
+              <Text style={styles.expenseMeta}>{account.type.toUpperCase()}</Text>
+            </View>
+            <Text style={styles.expenseAmount}>
+              {formatCurrency(account.total, baseCurrency)}
+            </Text>
+          </View>
+        ))}
+      </SectionCard>
+
+      <SectionCard
         title="Recent Expense Activity"
         subtitle="Latest entries from this month"
       >
@@ -176,7 +245,7 @@ export default function DashboardScreen() {
           <Text style={styles.emptyState}>No expenses recorded this month yet.</Text>
         ) : (
           recentExpenses.map((expense) => (
-            <View key={expense.id} style={styles.expenseRow}>
+            <View key={expense.id} style={styles.accountRow}>
               <View>
                 <Text style={styles.expenseTitle}>
                   {expense.subcategory.replace(/_/g, " ")}
@@ -216,7 +285,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: appTheme.colors.text,
   },
-  expenseRow: {
+  snapshotHint: {
+    fontSize: 13,
+    color: appTheme.colors.textMuted,
+  },
+  accountRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -240,5 +313,11 @@ const styles = StyleSheet.create({
   emptyState: {
     fontSize: 14,
     color: appTheme.colors.textMuted,
+  },
+  positive: {
+    color: appTheme.colors.accentEmerald,
+  },
+  negative: {
+    color: "#b91c1c",
   },
 });
