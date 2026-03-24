@@ -23,9 +23,12 @@ import { useAsyncResource } from "@/src/hooks/use-async-resource";
 import { mobileApi } from "@/src/lib/api";
 import {
   buildExpenseSummary,
+  buildExpenseSubcategoryTotals,
+  filterExpenses,
   getDefaultExpenseCategory,
   getDefaultExpenseSubcategory,
   getSubcategoryOptions,
+  sortExpenses,
 } from "@/src/lib/mobile-helpers";
 
 type ExpenseDraft = {
@@ -51,6 +54,10 @@ function createEmptyDraft(): ExpenseDraft {
   };
 }
 
+const isE2EEnabled = Boolean(
+  process.env.EXPO_PUBLIC_E2E_TEST_EMAIL && process.env.EXPO_PUBLIC_E2E_TEST_PASSWORD
+);
+
 export default function ExpensesScreen() {
   const resource = useAsyncResource(async () => {
     const [expenses, preferences] = await Promise.all([
@@ -62,6 +69,8 @@ export default function ExpensesScreen() {
   const [draft, setDraft] = useState<ExpenseDraft>(createEmptyDraft());
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"all" | "recurring" | "non_recurring">("all");
+  const [sortMode, setSortMode] = useState<"newest" | "largest">("newest");
 
   const baseCurrency = resource.data?.preferences.base_currency ?? "USD";
   const summary = buildExpenseSummary(resource.data?.expenses ?? []);
@@ -77,6 +86,14 @@ export default function ExpensesScreen() {
       color: appTheme.colors.accentAmber,
     },
   ];
+  const visibleExpenses = sortExpenses(
+    filterExpenses(resource.data?.expenses ?? [], activeFilter),
+    sortMode
+  );
+  const subcategoryBreakdown = buildExpenseSubcategoryTotals(resource.data?.expenses ?? []).slice(
+    0,
+    5
+  );
 
   function populateDraft(expense: Expense) {
     setDraft({
@@ -140,6 +157,26 @@ export default function ExpensesScreen() {
     }
   }
 
+  async function handleAddE2EExpense() {
+    setSaving(true);
+    setActionError(null);
+    try {
+      await mobileApi.expenses.create({
+        amount: 123.45,
+        currency: baseCurrency,
+        category: "non_recurring",
+        subcategory: "food_dining",
+        expenseDate: new Date().toISOString().slice(0, 10),
+        description: "Maestro Expense",
+      });
+      await resource.refresh();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to save expense");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <Screen
       title="Expenses"
@@ -169,6 +206,8 @@ export default function ExpensesScreen() {
       >
         <Field label="Amount">
           <FormInput
+            testID="expense-amount-input"
+            accessibilityLabel="Expense amount"
             value={draft.amount}
             onChangeText={(value) => setDraft((current) => ({ ...current, amount: value }))}
             keyboardType="decimal-pad"
@@ -177,6 +216,7 @@ export default function ExpensesScreen() {
         </Field>
         <Field label="Currency">
           <ChipSelector
+            testID="expense-currency"
             value={draft.currency}
             onChange={(value) => setDraft((current) => ({ ...current, currency: value }))}
             options={SUPPORTED_CURRENCIES.slice(0, 4).map((currency) => ({
@@ -187,6 +227,7 @@ export default function ExpensesScreen() {
         </Field>
         <Field label="Category">
           <ChipSelector
+            testID="expense-category"
             value={draft.category}
             onChange={(value) =>
               setDraft((current) => ({
@@ -203,6 +244,7 @@ export default function ExpensesScreen() {
         </Field>
         <Field label="Subcategory">
           <ChipSelector
+            testID="expense-subcategory"
             value={draft.subcategory}
             onChange={(value) => setDraft((current) => ({ ...current, subcategory: value }))}
             options={subcategoryOptions.map((option) => ({
@@ -213,6 +255,8 @@ export default function ExpensesScreen() {
         </Field>
         <Field label="Date">
           <FormInput
+            testID="expense-date-input"
+            accessibilityLabel="Expense date"
             value={draft.expenseDate}
             onChangeText={(value) =>
               setDraft((current) => ({ ...current, expenseDate: value }))
@@ -222,6 +266,8 @@ export default function ExpensesScreen() {
         </Field>
         <Field label="Description">
           <FormInput
+            testID="expense-description-input"
+            accessibilityLabel="Expense description"
             value={draft.description}
             onChangeText={(value) =>
               setDraft((current) => ({ ...current, description: value }))
@@ -235,7 +281,17 @@ export default function ExpensesScreen() {
             label={saving ? "Saving..." : draft.id ? "Update expense" : "Add expense"}
             onPress={handleSaveExpense}
             disabled={saving}
+            testID="expense-save-button"
           />
+          {__DEV__ && isE2EEnabled ? (
+            <PrimaryButton
+              label="Add E2E Expense"
+              onPress={handleAddE2EExpense}
+              disabled={saving}
+              tone="neutral"
+              testID="expense-add-e2e-button"
+            />
+          ) : null}
           {draft.id ? (
             <PrimaryButton
               label="Cancel edit"
@@ -254,8 +310,41 @@ export default function ExpensesScreen() {
         <DonutChart data={chartData} centerValue={formatCurrency(summary.total, baseCurrency)} />
       </SectionCard>
 
-      <SectionCard title="Recent Expenses" subtitle="Tap Edit to update, or Remove to delete">
-        {(resource.data?.expenses ?? []).map((expense) => (
+      <SectionCard
+        title="Subcategory Breakdown"
+        subtitle="Largest spending buckets across your tracked expenses"
+      >
+        {subcategoryBreakdown.map((item) => (
+          <View key={item.subcategory} style={styles.breakdownRow}>
+            <Text style={styles.subcategory}>{getSubcategoryLabel(item.subcategory as Expense["subcategory"])}</Text>
+            <Text style={styles.amount}>{formatCurrency(item.amount, baseCurrency)}</Text>
+          </View>
+        ))}
+      </SectionCard>
+
+      <SectionCard title="Expense List" subtitle="Filter, sort, edit, or remove entries">
+        <Field label="Filter">
+          <ChipSelector
+            value={activeFilter}
+            onChange={setActiveFilter}
+            options={[
+              { label: "All", value: "all" },
+              { label: "Recurring", value: "recurring" },
+              { label: "Non-recurring", value: "non_recurring" },
+            ]}
+          />
+        </Field>
+        <Field label="Sort">
+          <ChipSelector
+            value={sortMode}
+            onChange={setSortMode}
+            options={[
+              { label: "Newest", value: "newest" },
+              { label: "Largest", value: "largest" },
+            ]}
+          />
+        </Field>
+        {visibleExpenses.map((expense) => (
           <View key={expense.id} style={styles.card}>
             <View style={styles.row}>
               <Text style={styles.category}>{getCategoryLabel(expense.category)}</Text>
@@ -325,6 +414,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: appTheme.spacing.md,
     paddingTop: 4,
+  },
+  breakdownRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: appTheme.spacing.md,
   },
   editText: {
     color: appTheme.colors.primaryDeep,

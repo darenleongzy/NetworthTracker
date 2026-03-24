@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: "tab-fire"
+- assertVisible: "FIRE Settings"
+- scrollUntilVisible:
+    element:
+      id: "fire-apply-e2e-button"
+    direction: DOWN
+- tapOn:
+    id: "fire-apply-e2e-button"
+- extendedWaitUntil:
+    visible: "E2E FIRE scenario applied"
+    timeout: 20000
+- assertVisible: "10-Year Preview"

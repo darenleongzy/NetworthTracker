@@ -1,0 +1,10 @@
+appId: ${MAESTRO_APP_ID}
+---
+- waitForAnimationToEnd
+- runFlow: dismiss-developer-tools.yaml
+- assertVisible: "Welcome back"
+- runFlow: use-e2e-credentials.yaml
+- tapOn: "Sign in"
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000

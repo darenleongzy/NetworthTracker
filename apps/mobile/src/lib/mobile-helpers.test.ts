@@ -1,9 +1,13 @@
 import {
+  buildExpenseSubcategoryTotals,
+  buildMobileTrendSeries,
   buildExpenseSummary,
   buildMobileAccountGroups,
+  filterExpenses,
   getDefaultExpenseSubcategory,
   getSubcategoryOptions,
   mergeMobileFireSettings,
+  sortExpenses,
 } from "./mobile-helpers";
 import type { AccountWithHoldings, Expense } from "@track-my-worth/domain";
 
@@ -100,6 +104,76 @@ describe("mobile helpers", () => {
       recurring: 140,
       nonRecurring: 60,
     });
+  });
+
+  it("filters and sorts expenses for mobile list controls", () => {
+    const expenses = [
+      {
+        id: "e1",
+        category: "recurring",
+        subcategory: "rent_mortgage",
+        amount: 100,
+        expense_date: "2026-03-10",
+      },
+      {
+        id: "e2",
+        category: "non_recurring",
+        subcategory: "shopping",
+        amount: 260,
+        expense_date: "2026-03-12",
+      },
+    ] as Expense[];
+
+    expect(filterExpenses(expenses, "recurring")).toHaveLength(1);
+    expect(sortExpenses(expenses, "largest")[0]?.id).toBe("e2");
+    expect(sortExpenses(expenses, "newest")[0]?.id).toBe("e2");
+  });
+
+  it("builds subcategory totals and trend points", () => {
+    const expenses = [
+      {
+        id: "e1",
+        category: "recurring",
+        subcategory: "rent_mortgage",
+        amount: 100,
+        expense_date: "2026-03-10",
+      },
+      {
+        id: "e2",
+        category: "recurring",
+        subcategory: "rent_mortgage",
+        amount: 50,
+        expense_date: "2026-03-12",
+      },
+      {
+        id: "e3",
+        category: "non_recurring",
+        subcategory: "shopping",
+        amount: 90,
+        expense_date: "2026-03-08",
+      },
+    ] as Expense[];
+
+    const totals = buildExpenseSubcategoryTotals(expenses);
+    const trend = buildMobileTrendSeries(
+      [
+        {
+          id: "s1",
+          user_id: "u1",
+          total_value: 1000,
+          cash_value: 200,
+          investment_value: 800,
+          snapshot_date: "2026-03-01",
+          currency: "USD",
+          created_at: "",
+        },
+      ],
+      { snapshot_date: "2026-03-24", total_value: 1400 }
+    );
+
+    expect(totals[0]).toEqual({ subcategory: "rent_mortgage", amount: 150 });
+    expect(trend).toHaveLength(2);
+    expect(trend[1]?.value).toBe(1400);
   });
 
   it("returns subcategory defaults scoped to the selected category", () => {

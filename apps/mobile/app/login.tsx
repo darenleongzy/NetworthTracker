@@ -11,6 +11,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { appTheme } from "@track-my-worth/config";
 import { useSession } from "@/src/providers/session-provider";
 
+const e2eEmail = process.env.EXPO_PUBLIC_E2E_TEST_EMAIL?.trim();
+const e2ePassword = process.env.EXPO_PUBLIC_E2E_TEST_PASSWORD ?? "";
+const hasE2ECredentials = Boolean(e2eEmail && e2ePassword);
+
 export default function LoginScreen() {
   const { signIn } = useSession();
   const [email, setEmail] = useState("");
@@ -32,6 +36,13 @@ export default function LoginScreen() {
     }
   }
 
+  function applyE2ECredentials() {
+    if (!hasE2ECredentials) return;
+    setEmail(e2eEmail ?? "");
+    setPassword(e2ePassword);
+    setError(null);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
@@ -40,6 +51,8 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Sign in to your mobile dashboard.</Text>
 
         <TextInput
+          testID="login-email-input"
+          accessibilityLabel="Email"
           style={styles.input}
           autoCapitalize="none"
           keyboardType="email-address"
@@ -48,6 +61,8 @@ export default function LoginScreen() {
           onChangeText={setEmail}
         />
         <TextInput
+          testID="login-password-input"
+          accessibilityLabel="Password"
           style={styles.input}
           secureTextEntry
           placeholder="Password"
@@ -57,7 +72,24 @@ export default function LoginScreen() {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Pressable style={styles.button} onPress={handleSignIn} disabled={loading}>
+        {__DEV__ && hasE2ECredentials ? (
+          <Pressable
+            testID="login-use-e2e-credentials"
+            accessibilityLabel="Use E2E Credentials"
+            style={styles.secondaryButton}
+            onPress={applyE2ECredentials}
+          >
+            <Text style={styles.secondaryButtonText}>Use E2E Credentials</Text>
+          </Pressable>
+        ) : null}
+
+        <Pressable
+          testID="login-sign-in-button"
+          accessibilityLabel="Sign in"
+          style={styles.button}
+          onPress={handleSignIn}
+          disabled={loading}
+        >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
@@ -118,6 +150,20 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,
+  },
+  secondaryButton: {
+    marginTop: 4,
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surfaceMuted,
+  },
+  secondaryButtonText: {
+    color: appTheme.colors.text,
+    fontWeight: "600",
+    fontSize: 15,
   },
   error: {
     color: "#b91c1c",

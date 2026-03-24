@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+---
+- scrollUntilVisible:
+    element:
+      text: "Delete account"
+    direction: UP
+    timeout: 20000
+- tapOn: "Delete account"
+- extendedWaitUntil:
+    visible: "Add Account"
+    timeout: 20000

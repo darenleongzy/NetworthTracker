@@ -1,0 +1,13 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: "tab-expenses"
+- assertVisible: "Add Expense"
+- scrollUntilVisible:
+    element:
+      id: "expense-add-e2e-button"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "expense-add-e2e-button"
+- waitForAnimationToEnd
