@@ -350,6 +350,7 @@ export function AccountList({
                             size="icon"
                             onClick={() => handleDelete(account.id)}
                             disabled={deletingId === account.id}
+                            aria-label={`Delete ${account.name}`}
                           >
                             {deletingId === account.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

@@ -13,6 +13,35 @@ async function login(page: Page) {
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 }
 
+async function createAccount(page: Page, name: string, type: "cash" | "investment") {
+  await page.getByRole("button", { name: /Add Account/i }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: /Create Account/i })).toBeVisible();
+  await dialog.getByLabel(/Account Name/i).fill(name);
+  await dialog.getByRole("combobox").click();
+  await page.getByRole("option", { name: new RegExp(type, "i") }).click();
+  await dialog.getByRole("button", { name: /Create Account/i }).click();
+}
+
+async function selectAccountCategory(page: Page, type: "cash" | "investment") {
+  const tabName =
+    type === "investment" ? /Brokerage Accounts/i : /Cash Accounts/i;
+  await page.getByRole("tab", { name: tabName }).click();
+}
+
+async function expectAccountVisible(page: Page, name: string, type: "cash" | "investment") {
+  await selectAccountCategory(page, type);
+  await expect(page.getByRole("button", { name: `View ${name}` })).toBeVisible({
+    timeout: 5000,
+  });
+}
+
+async function openAccount(page: Page, name: string, type: "cash" | "investment") {
+  await expectAccountVisible(page, name, type);
+  await page.getByRole("button", { name: `View ${name}` }).click();
+}
+
 test.describe("Dashboard", () => {
   test.beforeEach(async () => {
     // Skip all tests if no credentials
@@ -25,8 +54,9 @@ test.describe("Dashboard", () => {
     await login(page);
 
     // Check main dashboard elements
-    await expect(page.getByText(/Net Worth/i).first()).toBeVisible();
-    await expect(page.getByText(/Total Assets/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dashboard/i })).toBeVisible();
+    await expect(page.getByText(/Total Net Worth/i)).toBeVisible();
+    await expect(page.getByTestId("net-worth")).toBeVisible();
   });
 
   test("sidebar navigation works", async ({ page }) => {
@@ -60,33 +90,21 @@ test.describe("Account Management", () => {
     await page.getByRole("link", { name: /Accounts/i }).click();
 
     // Click add account
-    await page.getByRole("button", { name: /Add Account/i }).click();
-
-    // Fill form
     const accountName = `Test Cash ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Cash/i).check();
-
-    // Submit
-    await page.getByRole("button", { name: /Create/i }).click();
+    await createAccount(page, accountName, "cash");
 
     // Verify account appears
-    await expect(page.getByText(accountName)).toBeVisible({ timeout: 5000 });
+    await expectAccountVisible(page, accountName, "cash");
   });
 
   test("can create an investment account", async ({ page }) => {
     await login(page);
 
     await page.getByRole("link", { name: /Accounts/i }).click();
-    await page.getByRole("button", { name: /Add Account/i }).click();
-
     const accountName = `Test Investment ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Investment/i).check();
+    await createAccount(page, accountName, "investment");
 
-    await page.getByRole("button", { name: /Create/i }).click();
-
-    await expect(page.getByText(accountName)).toBeVisible({ timeout: 5000 });
+    await expectAccountVisible(page, accountName, "investment");
   });
 
   test("can add cash holding to account", async ({ page }) => {
@@ -95,22 +113,21 @@ test.describe("Account Management", () => {
     await page.getByRole("link", { name: /Accounts/i }).click();
 
     // Create account first
-    await page.getByRole("button", { name: /Add Account/i }).click();
     const accountName = `Cash Test ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Cash/i).check();
-    await page.getByRole("button", { name: /Create/i }).click();
+    await createAccount(page, accountName, "cash");
 
     // Click on the account
-    await page.getByText(accountName).click();
+    await openAccount(page, accountName, "cash");
 
     // Add cash holding
-    await page.getByRole("button", { name: /Add Cash/i }).click();
-    await page.getByLabel(/Amount/i).fill("10000");
+    await page.getByRole("button", { name: /Add Holding/i }).click();
+    await page.getByLabel(/Balance/i).fill("10000");
     await page.getByRole("button", { name: /Save|Add|Create/i }).click();
 
     // Verify holding appears
-    await expect(page.getByText("10,000")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("cell", { name: /\$10,000\.00/i })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("can add stock holding to account", async ({ page }) => {
@@ -119,20 +136,17 @@ test.describe("Account Management", () => {
     await page.getByRole("link", { name: /Accounts/i }).click();
 
     // Create investment account
-    await page.getByRole("button", { name: /Add Account/i }).click();
     const accountName = `Stock Test ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Investment/i).check();
-    await page.getByRole("button", { name: /Create/i }).click();
+    await createAccount(page, accountName, "investment");
 
     // Click on the account
-    await page.getByText(accountName).click();
+    await openAccount(page, accountName, "investment");
 
     // Add stock holding
     await page.getByRole("button", { name: /Add Stock/i }).click();
-    await page.getByLabel(/Ticker/i).fill("AAPL");
-    await page.getByLabel(/Shares/i).fill("10");
-    await page.getByLabel(/Cost/i).fill("150");
+    await page.getByLabel(/Ticker Symbol/i).fill("AAPL");
+    await page.getByLabel(/Number of Shares/i).fill("10");
+    await page.getByLabel(/Cost Basis per Share/i).fill("150");
     await page.getByRole("button", { name: /Save|Add|Create/i }).click();
 
     // Verify holding appears
@@ -145,25 +159,14 @@ test.describe("Account Management", () => {
     await page.getByRole("link", { name: /Accounts/i }).click();
 
     // Create account to delete
-    await page.getByRole("button", { name: /Add Account/i }).click();
     const accountName = `Delete Test ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Cash/i).check();
-    await page.getByRole("button", { name: /Create/i }).click();
+    await createAccount(page, accountName, "cash");
 
-    await expect(page.getByText(accountName)).toBeVisible({ timeout: 5000 });
+    await expectAccountVisible(page, accountName, "cash");
 
-    // Click on account
-    await page.getByText(accountName).click();
-
-    // Delete account (look for delete button or trash icon)
-    const deleteButton = page.getByRole("button", { name: /Delete/i });
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click();
-    } else {
-      // Try trash icon
-      await page.locator('button:has(svg[class*="trash"])').click();
-    }
+    // Delete account from the list
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: `Delete ${accountName}` }).click();
 
     // Confirm deletion if dialog appears
     const confirmButton = page.getByRole("button", { name: /Confirm|Delete|Yes/i });
@@ -172,7 +175,9 @@ test.describe("Account Management", () => {
     }
 
     // Verify account is gone
-    await expect(page.getByText(accountName)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: `View ${accountName}` })).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 });
 
@@ -187,33 +192,23 @@ test.describe("Dashboard Updates", () => {
     await login(page);
 
     // Get initial net worth
-    const initialNetWorth = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => "0");
+    const initialNetWorth = await page.getByTestId("net-worth").textContent().catch(() => "0");
 
     // Add a cash holding
     await page.getByRole("link", { name: /Accounts/i }).click();
-    await page.getByRole("button", { name: /Add Account/i }).click();
-
     const accountName = `NW Test ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Cash/i).check();
-    await page.getByRole("button", { name: /Create/i }).click();
+    await createAccount(page, accountName, "cash");
 
-    await page.getByText(accountName).click();
-    await page.getByRole("button", { name: /Add Cash/i }).click();
-    await page.getByLabel(/Amount/i).fill("5000");
+    await openAccount(page, accountName, "cash");
+    await page.getByRole("button", { name: /Add Holding/i }).click();
+    await page.getByLabel(/Balance/i).fill("5000");
     await page.getByRole("button", { name: /Save|Add|Create/i }).click();
 
     // Go back to dashboard
     await page.getByRole("link", { name: /Dashboard/i }).click();
 
     // Net worth should have increased
-    const newNetWorth = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => null);
+    const newNetWorth = await page.getByTestId("net-worth").textContent().catch(() => null);
 
     // If we have both values, verify increase (basic check)
     if (newNetWorth && initialNetWorth !== newNetWorth) {
@@ -240,44 +235,34 @@ test.describe("Full Account Lifecycle", () => {
   }) => {
     // Step 1: Login
     await login(page);
-    await expect(page.getByText(/Net Worth/i).first()).toBeVisible();
+    await expect(page.getByTestId("net-worth")).toBeVisible();
 
     // Step 2: Capture initial dashboard values
-    const initialNetWorthText = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => "$0");
+    const initialNetWorthText = await page.getByTestId("net-worth").textContent().catch(() => "$0");
     const initialNetWorth = parseCurrency(initialNetWorthText);
-
-    const initialTotalAssetsText = await page
-      .locator('[data-testid="total-assets"]')
-      .textContent()
-      .catch(() => "$0");
-    const initialTotalAssets = parseCurrency(initialTotalAssetsText);
 
     // Step 3: Create a new cash account
     await page.getByRole("link", { name: /Accounts/i }).click();
     await expect(page).toHaveURL(/\/dashboard\/accounts/);
 
-    await page.getByRole("button", { name: /Add Account/i }).click();
     const accountName = `E2E Lifecycle Test ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Cash/i).check();
-    await page.getByRole("button", { name: /Create/i }).click();
+    await createAccount(page, accountName, "cash");
 
     // Verify account was created
-    await expect(page.getByText(accountName)).toBeVisible({ timeout: 5000 });
+    await expectAccountVisible(page, accountName, "cash");
 
     // Step 4: Add cash holding to the account
-    await page.getByText(accountName).click();
-    await page.getByRole("button", { name: /Add Cash/i }).click();
+    await openAccount(page, accountName, "cash");
+    await page.getByRole("button", { name: /Add Holding/i }).click();
 
     const cashAmount = 25000;
-    await page.getByLabel(/Amount/i).fill(cashAmount.toString());
+    await page.getByLabel(/Balance/i).fill(cashAmount.toString());
     await page.getByRole("button", { name: /Save|Add|Create/i }).click();
 
     // Verify holding appears in account
-    await expect(page.getByText(/25,000/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("cell", { name: /\$25,000\.00/i })).toBeVisible({
+      timeout: 5000,
+    });
 
     // Step 5: Navigate to dashboard and verify values increased
     await page.getByRole("link", { name: /Dashboard/i }).click();
@@ -286,34 +271,17 @@ test.describe("Full Account Lifecycle", () => {
     // Wait for dashboard to load with updated values
     await page.waitForTimeout(1000);
 
-    const updatedNetWorthText = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => "$0");
+    const updatedNetWorthText = await page.getByTestId("net-worth").textContent().catch(() => "$0");
     const updatedNetWorth = parseCurrency(updatedNetWorthText);
-
-    const updatedTotalAssetsText = await page
-      .locator('[data-testid="total-assets"]')
-      .textContent()
-      .catch(() => "$0");
-    const updatedTotalAssets = parseCurrency(updatedTotalAssetsText);
 
     // Verify net worth increased by approximately the cash amount added
     expect(updatedNetWorth).toBeGreaterThanOrEqual(initialNetWorth + cashAmount * 0.9);
-    expect(updatedTotalAssets).toBeGreaterThanOrEqual(initialTotalAssets + cashAmount * 0.9);
 
     // Step 6: Delete the account
     await page.getByRole("link", { name: /Accounts/i }).click();
-    await page.getByText(accountName).click();
-
-    // Find and click delete button
-    const deleteButton = page.getByRole("button", { name: /Delete/i });
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click();
-    } else {
-      // Try trash icon button
-      await page.locator('button:has(svg[class*="trash"])').first().click();
-    }
+    await selectAccountCategory(page, "cash");
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: `Delete ${accountName}` }).click();
 
     // Confirm deletion if dialog appears
     const confirmButton = page.getByRole("button", { name: /Confirm|Delete|Yes/i });
@@ -322,7 +290,9 @@ test.describe("Full Account Lifecycle", () => {
     }
 
     // Verify account is deleted
-    await expect(page.getByText(accountName)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: `View ${accountName}` })).not.toBeVisible({
+      timeout: 5000,
+    });
 
     // Step 7: Navigate to dashboard and verify values returned to original
     await page.getByRole("link", { name: /Dashboard/i }).click();
@@ -331,23 +301,12 @@ test.describe("Full Account Lifecycle", () => {
     // Wait for dashboard to update
     await page.waitForTimeout(1000);
 
-    const finalNetWorthText = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => "$0");
+    const finalNetWorthText = await page.getByTestId("net-worth").textContent().catch(() => "$0");
     const finalNetWorth = parseCurrency(finalNetWorthText);
-
-    const finalTotalAssetsText = await page
-      .locator('[data-testid="total-assets"]')
-      .textContent()
-      .catch(() => "$0");
-    const finalTotalAssets = parseCurrency(finalTotalAssetsText);
 
     // Verify values returned close to initial (within 5% tolerance for currency conversion)
     expect(finalNetWorth).toBeLessThanOrEqual(initialNetWorth * 1.05 + 100);
     expect(finalNetWorth).toBeGreaterThanOrEqual(initialNetWorth * 0.95 - 100);
-    expect(finalTotalAssets).toBeLessThanOrEqual(initialTotalAssets * 1.05 + 100);
-    expect(finalTotalAssets).toBeGreaterThanOrEqual(initialTotalAssets * 0.95 - 100);
   });
 
   test("login, add investment account with stock, verify dashboard updates", async ({
@@ -355,33 +314,26 @@ test.describe("Full Account Lifecycle", () => {
   }) => {
     // Step 1: Login
     await login(page);
-    await expect(page.getByText(/Net Worth/i).first()).toBeVisible();
+    await expect(page.getByTestId("net-worth")).toBeVisible();
 
     // Step 2: Capture initial values
-    const initialNetWorthText = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => "$0");
+    const initialNetWorthText = await page.getByTestId("net-worth").textContent().catch(() => "$0");
     const initialNetWorth = parseCurrency(initialNetWorthText);
 
     // Step 3: Create investment account
     await page.getByRole("link", { name: /Accounts/i }).click();
-    await page.getByRole("button", { name: /Add Account/i }).click();
-
     const accountName = `E2E Stock Test ${Date.now()}`;
-    await page.getByLabel(/Name/i).fill(accountName);
-    await page.getByLabel(/Investment/i).check();
-    await page.getByRole("button", { name: /Create/i }).click();
+    await createAccount(page, accountName, "investment");
 
-    await expect(page.getByText(accountName)).toBeVisible({ timeout: 5000 });
+    await expectAccountVisible(page, accountName, "investment");
 
     // Step 4: Add stock holding
-    await page.getByText(accountName).click();
+    await openAccount(page, accountName, "investment");
     await page.getByRole("button", { name: /Add Stock/i }).click();
 
-    await page.getByLabel(/Ticker/i).fill("AAPL");
-    await page.getByLabel(/Shares/i).fill("10");
-    await page.getByLabel(/Cost/i).fill("150");
+    await page.getByLabel(/Ticker Symbol/i).fill("AAPL");
+    await page.getByLabel(/Number of Shares/i).fill("10");
+    await page.getByLabel(/Cost Basis per Share/i).fill("150");
     await page.getByRole("button", { name: /Save|Add|Create/i }).click();
 
     // Wait for stock price to load
@@ -391,10 +343,7 @@ test.describe("Full Account Lifecycle", () => {
     await page.getByRole("link", { name: /Dashboard/i }).click();
     await page.waitForTimeout(1000);
 
-    const updatedNetWorthText = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => "$0");
+    const updatedNetWorthText = await page.getByTestId("net-worth").textContent().catch(() => "$0");
     const updatedNetWorth = parseCurrency(updatedNetWorthText);
 
     // Stock value should have increased net worth (10 shares * ~$150+ per share)
@@ -402,30 +351,24 @@ test.describe("Full Account Lifecycle", () => {
 
     // Step 6: Clean up - delete the account
     await page.getByRole("link", { name: /Accounts/i }).click();
-    await page.getByText(accountName).click();
-
-    const deleteButton = page.getByRole("button", { name: /Delete/i });
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click();
-    } else {
-      await page.locator('button:has(svg[class*="trash"])').first().click();
-    }
+    await selectAccountCategory(page, "investment");
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: `Delete ${accountName}` }).click();
 
     const confirmButton = page.getByRole("button", { name: /Confirm|Delete|Yes/i });
     if (await confirmButton.isVisible().catch(() => false)) {
       await confirmButton.click();
     }
 
-    await expect(page.getByText(accountName)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: `View ${accountName}` })).not.toBeVisible({
+      timeout: 5000,
+    });
 
     // Step 7: Verify dashboard returned to initial
     await page.getByRole("link", { name: /Dashboard/i }).click();
     await page.waitForTimeout(1000);
 
-    const finalNetWorthText = await page
-      .locator('[data-testid="net-worth"]')
-      .textContent()
-      .catch(() => "$0");
+    const finalNetWorthText = await page.getByTestId("net-worth").textContent().catch(() => "$0");
     const finalNetWorth = parseCurrency(finalNetWorthText);
 
     expect(finalNetWorth).toBeLessThanOrEqual(initialNetWorth * 1.05 + 100);

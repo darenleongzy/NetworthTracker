@@ -30,14 +30,20 @@ export function SummaryCards({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       {/* Total Net Worth - Purple */}
-      <div className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 p-6 text-white shadow-lg shadow-purple-500/25 overflow-hidden">
+      <div
+        className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 p-6 text-white shadow-lg shadow-purple-500/25 overflow-hidden"
+        data-testid="net-worth-card"
+      >
         <div className="flex items-center justify-between pb-2">
           <p className="text-sm font-medium text-white/90">Total Net Worth</p>
           <div className="rounded-full bg-white/20 p-2 flex-shrink-0">
             <span className="text-sm font-bold">{currencySymbol}</span>
           </div>
         </div>
-        <div className="text-center text-[clamp(1.25rem,4vw,1.85rem)] font-bold leading-tight tracking-tight sm:text-left">
+        <div
+          className="text-center text-[clamp(1.25rem,4vw,1.85rem)] font-bold leading-tight tracking-tight sm:text-left"
+          data-testid="net-worth"
+        >
           {formatWholeNumber(totalNetWorth, baseCurrency)}
         </div>
       </div>

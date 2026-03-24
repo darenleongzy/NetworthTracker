@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Track My Worth",
+    "slug": "track-my-worth",
+    "scheme": "trackmyworth",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      }
+    },
+    "extra": {
+      "router": {}
+    }
+  }
+}

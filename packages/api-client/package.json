@@ -1,0 +1,12 @@
+{
+  "name": "@track-my-worth/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "@track-my-worth/domain": "0.1.0"
+  }
+}
