@@ -146,6 +146,17 @@ export default function LandingPage() {
 
       <footer className="border-t px-6 py-6 text-center text-sm text-muted-foreground">
         <p>Track My Worth &mdash; Track your financial journey</p>
+        <div className="mt-2 flex items-center justify-center gap-4">
+          <Link href="/privacy" className="hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="hover:text-foreground transition-colors">
+            Terms of Service
+          </Link>
+          <Link href="/delete-account" className="hover:text-foreground transition-colors">
+            Delete Account
+          </Link>
+        </div>
         <a
           href="https://buymeacoffee.com/dalezy"
           target="_blank"
