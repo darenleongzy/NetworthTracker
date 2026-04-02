@@ -9,10 +9,23 @@ export default defineConfig({
     setupFiles: ["./tests/mobile.setup.ts"],
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./"),
-      react: path.resolve(__dirname, "./node_modules/react"),
-      "react/jsx-runtime": path.resolve(__dirname, "./node_modules/react/jsx-runtime"),
-    },
+    alias: [
+      {
+        find: /^@\/src\//,
+        replacement: `${path.resolve(__dirname, "./apps/mobile/src")}/`,
+      },
+      {
+        find: /^@\//,
+        replacement: `${path.resolve(__dirname, "./")}/`,
+      },
+      {
+        find: "react",
+        replacement: path.resolve(__dirname, "./node_modules/react"),
+      },
+      {
+        find: "react/jsx-runtime",
+        replacement: path.resolve(__dirname, "./node_modules/react/jsx-runtime"),
+      },
+    ],
   },
 });

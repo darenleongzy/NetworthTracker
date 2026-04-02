@@ -51,17 +51,15 @@ export function HoldingsOverview({
   baseCurrency?: string;
   exchangeRates?: ExchangeRates;
 }) {
-  // Helper to convert to base currency
-  function convertToBase(amount: number, fromCurrency: string): number {
-    if (fromCurrency === baseCurrency) return amount;
-    const rate = exchangeRates[fromCurrency];
-    if (!rate || rate === 0) return amount;
-    return amount / rate;
-  }
-
   // Build a flat list of all holdings
   const rows = useMemo<HoldingRow[]>(() => {
     const result: HoldingRow[] = [];
+    const convertToBase = (amount: number, fromCurrency: string): number => {
+      if (fromCurrency === baseCurrency) return amount;
+      const rate = exchangeRates[fromCurrency];
+      if (!rate || rate === 0) return amount;
+      return amount / rate;
+    };
 
     for (const account of accounts) {
       for (const h of account.cash_holdings) {

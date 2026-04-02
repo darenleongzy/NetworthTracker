@@ -16,6 +16,9 @@ import {
   Flame,
   Shield,
   Coffee,
+  FileText,
+  ScrollText,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -92,6 +95,45 @@ function NavContent({
           <Coffee className="mr-2 h-4 w-4" />
           Buy me a coffee
         </a>
+        <Link
+          href="/privacy"
+          className={cn(
+            "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            isDarkSidebar
+              ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              : "text-foreground hover:bg-secondary"
+          )}
+          onClick={onNavigate}
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          Privacy Policy
+        </Link>
+        <Link
+          href="/terms"
+          className={cn(
+            "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            isDarkSidebar
+              ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              : "text-foreground hover:bg-secondary"
+          )}
+          onClick={onNavigate}
+        >
+          <ScrollText className="mr-2 h-4 w-4" />
+          Terms of Service
+        </Link>
+        <Link
+          href="/delete-account"
+          className={cn(
+            "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            isDarkSidebar
+              ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              : "text-foreground hover:bg-secondary"
+          )}
+          onClick={onNavigate}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete Account
+        </Link>
         <button
           className={cn(
             "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
