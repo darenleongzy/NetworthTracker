@@ -2,6 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  describeAccountHistoryEvent,
+  formatAccountHistoryTimestamp,
+  getAccountHistoryEventDetails,
+} from "@/lib/account-history";
 import { updateAccount } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +26,7 @@ import { CashHoldingsTable } from "@/components/cash-holdings-table";
 import { StockHoldingsTable } from "@/components/stock-holdings-table";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { AccountHistoryChart } from "@/components/charts/account-history-chart";
 import {
   CPF_DEFAULT_PROJECTION_YEARS,
   CPF_ORDINARY_WAGE_CEILING,
@@ -37,7 +43,12 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/calculations";
 import type { ExchangeRates } from "@/lib/exchange-rates";
 import type { StockPriceData } from "@/lib/stock-api";
-import type { AccountWithHoldings, CpfAccountSettings } from "@/lib/types";
+import type {
+  AccountHistoryEvent,
+  AccountValueSnapshot,
+  AccountWithHoldings,
+  CpfAccountSettings,
+} from "@/lib/types";
 
 export function AccountDetail({
   account,
@@ -45,12 +56,16 @@ export function AccountDetail({
   exchangeRates = {},
   stockPrices = {},
   cpfSettings = null,
+  accountHistoryEvents = [],
+  accountValueSnapshots = [],
 }: {
   account: AccountWithHoldings;
   baseCurrency?: string;
   exchangeRates?: ExchangeRates;
   stockPrices?: Record<string, StockPriceData>;
   cpfSettings?: CpfAccountSettings | null;
+  accountHistoryEvents?: AccountHistoryEvent[];
+  accountValueSnapshots?: AccountValueSnapshot[];
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(account.name);
@@ -283,6 +298,64 @@ export function AccountDetail({
           </CardContent>
         </Card>
       )}
+
+      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+        <AccountHistoryChart
+          snapshots={accountValueSnapshots}
+          currency={baseCurrency}
+        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Change History</CardTitle>
+            <CardDescription>
+              Recent account edits and value-affecting actions visible to this user.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {accountHistoryEvents.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                No change history yet. Events will appear after you update this account.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {accountHistoryEvents.map((event) => {
+                  const detail = describeAccountHistoryEvent(event);
+                  const detailRows = getAccountHistoryEventDetails(event);
+                  return (
+                    <div
+                      key={event.id}
+                      className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-slate-950">{event.event_label}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatAccountHistoryTimestamp(event.created_at)}
+                        </p>
+                      </div>
+                      {detail && detailRows.length === 0 ? (
+                        <p className="mt-2 text-sm text-slate-600">{detail}</p>
+                      ) : null}
+                      {detailRows.length > 0 ? (
+                        <div className="mt-3 space-y-2 rounded-xl border border-slate-200/70 bg-slate-50/80 p-3">
+                          {detailRows.map((row) => (
+                            <div
+                              key={`${event.id}-${row.label}`}
+                              className="flex flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between"
+                            >
+                              <span className="font-medium text-slate-700">{row.label}</span>
+                              <span className="text-slate-600 sm:text-right">{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

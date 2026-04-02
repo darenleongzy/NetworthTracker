@@ -9,8 +9,8 @@ import {
   getCurrentMonthExpenses,
 } from "@/lib/calculations";
 import { saveSnapshot, getUserPreferences } from "@/lib/actions";
+import { getMonthlyAccountTypeTotals, saveAccountSnapshots } from "@/lib/actions";
 import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
-import type { ExchangeRates } from "@/lib/exchange-rates";
 import { SummaryCards } from "@/components/summary-cards";
 import { BaseCurrencySelector } from "@/components/base-currency-selector";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
@@ -18,13 +18,14 @@ import { AllocationChart } from "@/components/charts/allocation-chart";
 import { GainsChart } from "@/components/charts/gains-chart";
 import { ExpenseBreakdownChart } from "@/components/charts/expense-breakdown-chart";
 import { HoldingsOverview } from "@/components/holdings-overview";
+import { AccountTypeMonthlyChart } from "@/components/charts/account-type-monthly-chart";
 import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
 
   // Fetch all user data in parallel
-  const [accountsRes, snapshotsRes, expensesRes, preferences] = await Promise.all([
+  const [accountsRes, snapshotsRes, expensesRes, preferences, monthlyAccountTypeTotals] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
@@ -39,6 +40,7 @@ export default async function DashboardPage() {
       .select("*")
       .order("expense_date", { ascending: false }),
     getUserPreferences(),
+    getMonthlyAccountTypeTotals(),
   ]);
 
   const accounts = (accountsRes.data ?? []) as (Account & {
@@ -60,7 +62,6 @@ export default async function DashboardPage() {
 
   // Separate accounts by type
   const cashAccounts = accounts.filter((a) => a.type === "cash");
-  const investmentAccounts = accounts.filter((a) => a.type === "investment");
   const cpfAccounts = accounts.filter((a) => a.type === "cpf");
   const srsAccounts = accounts.filter((a) => a.type === "srs");
 
@@ -88,14 +89,12 @@ export default async function DashboardPage() {
 
   const totalNetWorth = cashTotal + investmentValue + cpfTotal + srsTotal;
   const totalGainLoss = investmentValue - investmentCost;
-  const gainLossPercent =
-    investmentCost > 0 ? (totalGainLoss / investmentCost) * 100 : 0;
-
   // Save today's snapshot (always in current base currency value)
   const today = new Date().toISOString().split("T")[0];
   if (accounts.length > 0) {
     try {
       await saveSnapshot(totalNetWorth, cashTotal, investmentValue, baseCurrency);
+      await saveAccountSnapshots(accounts, baseCurrency, exchangeRates, prices);
     } catch {
       // Snapshot save is best-effort
     }
@@ -194,6 +193,11 @@ export default async function DashboardPage() {
       {snapshots.length > 1 && (
         <GainsChart snapshots={snapshots} />
       )}
+
+      <AccountTypeMonthlyChart
+        data={monthlyAccountTypeTotals}
+        baseCurrency={baseCurrency}
+      />
 
       <HoldingsOverview
         accounts={accounts}
