@@ -2,9 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { refreshStockPriceIfStale } from "@/lib/stock-api";
+import {
+  aggregateMonthlyAccountTypeTotals,
+  buildAccountHistoryEventLabel,
+  buildSnapshotRecord,
+  calculateAccountTotalValue,
+} from "@/lib/account-history";
+import { getExchangeRates } from "@/lib/exchange-rates";
+import { getStockPrices, refreshStockPriceIfStale } from "@/lib/stock-api";
 import type {
+  AccountHistoryEventType,
   AccountType,
+  AccountValueSnapshot,
+  AccountWithHoldings,
   CpfAccountSettings,
   ExpenseCategory,
   ExpenseSubcategory,
@@ -28,6 +38,78 @@ function isMissingCpfSettingsTableError(error: {
   );
 }
 
+async function recordAccountHistoryEvent(
+  userId: string,
+  accountId: string | null,
+  eventType: AccountHistoryEventType,
+  accountName: string,
+  metadata: Record<string, unknown> = {}
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("account_history_events").insert({
+    user_id: userId,
+    account_id: accountId,
+    event_type: eventType,
+    event_label: buildAccountHistoryEventLabel(eventType, accountName),
+    metadata,
+  });
+
+  if (error) {
+    console.error("Failed to record account history event:", error);
+  }
+}
+
+async function getAccountWithHoldingsForSnapshot(accountId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("accounts")
+    .select("*, cash_holdings(*), stock_holdings(*)")
+    .eq("id", accountId)
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "Account not found");
+  }
+
+  return data as AccountWithHoldings;
+}
+
+async function saveAccountSnapshotForAccount(
+  userId: string,
+  accountId: string
+) {
+  const supabase = await createClient();
+  const account = await getAccountWithHoldingsForSnapshot(accountId);
+  const preferences = await getUserPreferences();
+  const baseCurrency = preferences.base_currency;
+  const exchangeRates = await getExchangeRates(baseCurrency);
+  const tickers = account.stock_holdings.map((holding) => holding.ticker);
+  const stockPrices = tickers.length > 0 ? await getStockPrices(tickers) : {};
+  const totalValue = calculateAccountTotalValue(
+    account,
+    baseCurrency,
+    exchangeRates,
+    stockPrices
+  );
+  const today = new Date().toISOString().split("T")[0];
+
+  const { error } = await supabase.from("account_value_snapshots").upsert(
+    buildSnapshotRecord(
+      account.id,
+      userId,
+      account.type,
+      totalValue,
+      baseCurrency,
+      today
+    ),
+    { onConflict: "account_id,snapshot_date" }
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 // ── Accounts ──
 
 export async function createAccount(name: string, type: AccountType) {
@@ -44,6 +126,14 @@ export async function createAccount(name: string, type: AccountType) {
     .single();
 
   if (error) throw new Error(error.message);
+  await recordAccountHistoryEvent(user.id, data.id, "account_created", data.name, {
+    accountType: data.type,
+  });
+  const today = new Date().toISOString().split("T")[0];
+  await supabase.from("account_value_snapshots").upsert(
+    buildSnapshotRecord(data.id, user.id, data.type, 0, "USD", today),
+    { onConflict: "account_id,snapshot_date" }
+  );
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/accounts");
   return data;
@@ -59,7 +149,7 @@ export async function updateAccount(id: string, name: string) {
   // Verify ownership before update
   const { data: account } = await supabase
     .from("accounts")
-    .select("user_id")
+    .select("user_id, name")
     .eq("id", id)
     .single();
 
@@ -73,8 +163,13 @@ export async function updateAccount(id: string, name: string) {
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+  await recordAccountHistoryEvent(user.id, id, "account_renamed", name, {
+    previousName: account.name,
+    newName: name,
+  });
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/accounts");
+  revalidatePath(`/dashboard/accounts/${id}`);
 }
 
 export async function deleteAccount(id: string) {
@@ -93,6 +188,18 @@ export async function deleteAccount(id: string) {
 
   if (!account || account.user_id !== user.id) {
     throw new Error("Account not found");
+  }
+
+  const { data: accountRecord } = await supabase
+    .from("accounts")
+    .select("name, type")
+    .eq("id", id)
+    .single();
+
+  if (accountRecord) {
+    await recordAccountHistoryEvent(user.id, id, "account_deleted", accountRecord.name, {
+      accountType: accountRecord.type,
+    });
   }
 
   const { error } = await supabase.from("accounts").delete().eq("id", id);
@@ -120,13 +227,19 @@ export async function upsertCashHolding(
   // Verify account ownership
   const { data: account } = await supabase
     .from("accounts")
-    .select("user_id")
+    .select("user_id, name")
     .eq("id", accountId)
     .single();
 
   if (!account || account.user_id !== user.id) {
     throw new Error("Account not found");
   }
+
+  const { data: accountRecord } = await supabase
+    .from("accounts")
+    .select("name, type")
+    .eq("id", accountId)
+    .single();
 
   if (holdingId) {
     // Verify holding belongs to user's account
@@ -140,17 +253,56 @@ export async function upsertCashHolding(
       throw new Error("Holding not found");
     }
 
+    const { data: existingHolding } = await supabase
+      .from("cash_holdings")
+      .select("balance, currency, label")
+      .eq("id", holdingId)
+      .single();
+
     const { error } = await supabase
       .from("cash_holdings")
       .update({ balance, currency, label })
       .eq("id", holdingId);
     if (error) throw new Error(error.message);
+
+    if (
+      !existingHolding ||
+      Number(existingHolding.balance) !== balance ||
+      existingHolding.currency !== currency ||
+      (existingHolding.label ?? null) !== (label ?? null)
+    ) {
+      await recordAccountHistoryEvent(
+        user.id,
+        accountId,
+        "cash_holding_updated",
+        accountRecord?.name ?? "Account",
+        {
+          label: label ?? existingHolding?.label ?? null,
+          currency,
+          previousBalance: Number(existingHolding?.balance ?? 0),
+          newBalance: balance,
+        }
+      );
+    }
   } else {
     const { error } = await supabase
       .from("cash_holdings")
       .insert({ account_id: accountId, balance, currency, label });
     if (error) throw new Error(error.message);
+    await recordAccountHistoryEvent(
+      user.id,
+      accountId,
+      "cash_holding_created",
+      accountRecord?.name ?? "Account",
+      {
+        label: label ?? null,
+        currency,
+        newBalance: balance,
+      }
+    );
   }
+
+  await saveAccountSnapshotForAccount(user.id, accountId);
 
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/accounts/${accountId}`);
@@ -177,6 +329,12 @@ export async function upsertCpfHoldings(
     throw new Error("Account not found");
   }
 
+  const { data: accountRecord } = await supabase
+    .from("accounts")
+    .select("name")
+    .eq("id", accountId)
+    .single();
+
   // Get existing CPF holdings for this account
   const { data: existing } = await supabase
     .from("cash_holdings")
@@ -185,6 +343,16 @@ export async function upsertCpfHoldings(
     .in("label", ["OA", "SA", "MA"]);
 
   const existingMap = new Map(existing?.map((h) => [h.label, h.id]) ?? []);
+  const previousValues = new Map(
+    ((await supabase
+      .from("cash_holdings")
+      .select("label, balance")
+      .eq("account_id", accountId)
+      .in("label", ["OA", "SA", "MA"])).data ?? []).map((holding) => [
+      holding.label ?? "",
+      Number(holding.balance),
+    ])
+  );
 
   for (const { label, balance } of holdings) {
     const existingId = existingMap.get(label);
@@ -204,6 +372,30 @@ export async function upsertCpfHoldings(
     }
   }
 
+  const changedLabels = holdings
+    .filter(({ label, balance }) => Number(previousValues.get(label) ?? 0) !== balance)
+    .map(({ label }) => label);
+
+  if (changedLabels.length > 0) {
+    await recordAccountHistoryEvent(
+      user.id,
+      accountId,
+      "cpf_holdings_updated",
+      accountRecord?.name ?? "CPF Account",
+      {
+        updatedLabels: changedLabels,
+        before: Object.fromEntries(
+          holdings.map(({ label }) => [label, Number(previousValues.get(label) ?? 0)])
+        ),
+        after: Object.fromEntries(
+          holdings.map(({ label, balance }) => [label, balance])
+        ),
+      }
+    );
+  }
+
+  await saveAccountSnapshotForAccount(user.id, accountId);
+
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/accounts/${accountId}`);
 }
@@ -219,7 +411,7 @@ export async function getCpfAccountSettings(
 
   const { data: account } = await supabase
     .from("accounts")
-    .select("user_id, type")
+    .select("user_id, type, name")
     .eq("id", accountId)
     .single();
 
@@ -258,7 +450,7 @@ export async function upsertCpfAccountSettings(
 
   const { data: account } = await supabase
     .from("accounts")
-    .select("user_id, type")
+    .select("user_id, type, name")
     .eq("id", accountId)
     .single();
 
@@ -270,8 +462,15 @@ export async function upsertCpfAccountSettings(
     throw new Error("CPF settings can only be saved for CPF accounts");
   }
 
+  const { data: existingSettings } = await supabase
+    .from("cpf_account_settings")
+    .select("*")
+    .eq("account_id", accountId)
+    .maybeSingle();
+
   const mergedSettings = {
     ...DEFAULT_CPF_ACCOUNT_SETTINGS,
+    ...(existingSettings ?? {}),
     ...settings,
   };
 
@@ -302,6 +501,35 @@ export async function upsertCpfAccountSettings(
     }
     throw new Error(error.message);
   }
+
+  const previousSettings = {
+    ...DEFAULT_CPF_ACCOUNT_SETTINGS,
+    ...(existingSettings ?? {}),
+  };
+  const changedFields = Object.keys(mergedSettings).filter((key) => {
+    const typedKey = key as keyof typeof mergedSettings;
+    return previousSettings[typedKey] !== mergedSettings[typedKey];
+  });
+
+  if (changedFields.length > 0) {
+    await recordAccountHistoryEvent(
+      user.id,
+      accountId,
+      "cpf_settings_updated",
+      account.name,
+      {
+        changedFields,
+        before: Object.fromEntries(
+          changedFields.map((key) => [key, previousSettings[key as keyof typeof previousSettings]])
+        ),
+        after: Object.fromEntries(
+          changedFields.map((key) => [key, mergedSettings[key as keyof typeof mergedSettings]])
+        ),
+      }
+    );
+  }
+
+  await saveAccountSnapshotForAccount(user.id, accountId);
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/accounts/${accountId}`);
 }
@@ -325,9 +553,33 @@ export async function deleteCashHolding(id: string) {
     throw new Error("Holding not found");
   }
 
+  const { data: holdingRecord } = await supabase
+    .from("cash_holdings")
+    .select("account_id, balance, currency, label")
+    .eq("id", id)
+    .single();
+  const { data: accountRecord } = await supabase
+    .from("accounts")
+    .select("name")
+    .eq("id", holding.account_id)
+    .single();
+
   const { error } = await supabase.from("cash_holdings").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  await recordAccountHistoryEvent(
+    user.id,
+    holding.account_id,
+    "cash_holding_deleted",
+    accountRecord?.name ?? "Account",
+    {
+      label: holdingRecord?.label ?? null,
+      currency: holdingRecord?.currency ?? "USD",
+      previousBalance: Number(holdingRecord?.balance ?? 0),
+    }
+  );
+  await saveAccountSnapshotForAccount(user.id, holding.account_id);
   revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/accounts/${holding.account_id}`);
 }
 
 // ── Stock Holdings ──
@@ -356,6 +608,12 @@ export async function upsertStockHolding(
     throw new Error("Account not found");
   }
 
+  const { data: accountRecord } = await supabase
+    .from("accounts")
+    .select("name")
+    .eq("id", accountId)
+    .single();
+
   const upperTicker = ticker.toUpperCase();
 
   if (holdingId) {
@@ -370,6 +628,12 @@ export async function upsertStockHolding(
       throw new Error("Holding not found");
     }
 
+    const { data: existingHolding } = await supabase
+      .from("stock_holdings")
+      .select("ticker, shares, cost_basis_per_share")
+      .eq("id", holdingId)
+      .single();
+
     const { error } = await supabase
       .from("stock_holdings")
       .update({
@@ -379,6 +643,28 @@ export async function upsertStockHolding(
       })
       .eq("id", holdingId);
     if (error) throw new Error(error.message);
+
+    if (
+      !existingHolding ||
+      existingHolding.ticker !== upperTicker ||
+      Number(existingHolding.shares) !== shares ||
+      Number(existingHolding.cost_basis_per_share) !== costBasisPerShare
+    ) {
+      await recordAccountHistoryEvent(
+        user.id,
+        accountId,
+        "stock_holding_updated",
+        accountRecord?.name ?? "Account",
+        {
+          ticker: upperTicker,
+          previousTicker: existingHolding?.ticker ?? upperTicker,
+          previousShares: Number(existingHolding?.shares ?? 0),
+          newShares: shares,
+          previousCostBasisPerShare: Number(existingHolding?.cost_basis_per_share ?? 0),
+          newCostBasisPerShare: costBasisPerShare,
+        }
+      );
+    }
   } else {
     const { error } = await supabase.from("stock_holdings").insert({
       account_id: accountId,
@@ -387,6 +673,17 @@ export async function upsertStockHolding(
       cost_basis_per_share: costBasisPerShare,
     });
     if (error) throw new Error(error.message);
+    await recordAccountHistoryEvent(
+      user.id,
+      accountId,
+      "stock_holding_created",
+      accountRecord?.name ?? "Account",
+      {
+        ticker: upperTicker,
+        newShares: shares,
+        newCostBasisPerShare: costBasisPerShare,
+      }
+    );
   }
 
   // Refresh stock price if stale (older than 24 hours)
@@ -397,6 +694,8 @@ export async function upsertStockHolding(
     console.error(`Failed to refresh stock price for ${upperTicker}:`, error);
     // Don't throw - price refresh failure shouldn't block the save
   }
+
+  await saveAccountSnapshotForAccount(user.id, accountId);
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/accounts");
@@ -422,12 +721,36 @@ export async function deleteStockHolding(id: string) {
     throw new Error("Holding not found");
   }
 
+  const { data: holdingRecord } = await supabase
+    .from("stock_holdings")
+    .select("account_id, ticker, shares, cost_basis_per_share")
+    .eq("id", id)
+    .single();
+  const { data: accountRecord } = await supabase
+    .from("accounts")
+    .select("name")
+    .eq("id", holding.account_id)
+    .single();
+
   const { error } = await supabase
     .from("stock_holdings")
     .delete()
     .eq("id", id);
   if (error) throw new Error(error.message);
+  await recordAccountHistoryEvent(
+    user.id,
+    holding.account_id,
+    "stock_holding_deleted",
+    accountRecord?.name ?? "Account",
+    {
+      ticker: holdingRecord?.ticker ?? null,
+      previousShares: Number(holdingRecord?.shares ?? 0),
+      previousCostBasisPerShare: Number(holdingRecord?.cost_basis_per_share ?? 0),
+    }
+  );
+  await saveAccountSnapshotForAccount(user.id, holding.account_id);
   revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/accounts/${holding.account_id}`);
 }
 
 // ── User Preferences ──
@@ -549,6 +872,92 @@ export async function saveSnapshot(
   );
 
   if (error) throw new Error(error.message);
+}
+
+export async function saveAccountSnapshots(
+  accounts: AccountWithHoldings[],
+  baseCurrency: string,
+  exchangeRates: Record<string, number>,
+  stockPrices: Record<string, { price: number; currency: string }>
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const today = new Date().toISOString().split("T")[0];
+  const rows = accounts.map((account) =>
+    buildSnapshotRecord(
+      account.id,
+      user.id,
+      account.type,
+      calculateAccountTotalValue(account, baseCurrency, exchangeRates, stockPrices),
+      baseCurrency,
+      today
+    )
+  );
+
+  if (rows.length === 0) return;
+
+  const { error } = await supabase
+    .from("account_value_snapshots")
+    .upsert(rows, { onConflict: "account_id,snapshot_date" });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function getAccountHistoryEvents(accountId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("account_history_events")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("account_id", accountId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getAccountValueSnapshots(accountId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("account_value_snapshots")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("account_id", accountId)
+    .order("snapshot_date", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as AccountValueSnapshot[];
+}
+
+export async function getMonthlyAccountTypeTotals() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("account_value_snapshots")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("snapshot_date", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return aggregateMonthlyAccountTypeTotals((data ?? []) as AccountValueSnapshot[]);
 }
 
 // ── Expenses ──

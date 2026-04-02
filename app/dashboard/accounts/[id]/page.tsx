@@ -2,11 +2,16 @@ export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCpfAccountSettings, getUserPreferences } from "@/lib/actions";
+import {
+  getAccountHistoryEvents,
+  getAccountValueSnapshots,
+  getCpfAccountSettings,
+  getUserPreferences,
+} from "@/lib/actions";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { getStockPrices } from "@/lib/stock-api";
 import { AccountDetail } from "@/components/account-detail";
-import type { AccountWithHoldings } from "@/lib/types";
+import type { AccountHistoryEvent, AccountValueSnapshot, AccountWithHoldings } from "@/lib/types";
 
 export default async function AccountDetailPage({
   params,
@@ -29,6 +34,10 @@ export default async function AccountDetailPage({
 
   const cpfSettings =
     account.type === "cpf" ? await getCpfAccountSettings(account.id) : null;
+  const [accountHistoryEvents, accountValueSnapshots] = await Promise.all([
+    getAccountHistoryEvents(account.id),
+    getAccountValueSnapshots(account.id),
+  ]);
 
   const baseCurrency = preferences.base_currency;
   const exchangeRates = await getExchangeRates(baseCurrency);
@@ -45,6 +54,8 @@ export default async function AccountDetailPage({
       exchangeRates={exchangeRates}
       stockPrices={stockPrices}
       cpfSettings={cpfSettings}
+      accountHistoryEvents={accountHistoryEvents as AccountHistoryEvent[]}
+      accountValueSnapshots={accountValueSnapshots as AccountValueSnapshot[]}
     />
   );
 }

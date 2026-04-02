@@ -53,6 +53,40 @@ export interface NetWorthSnapshot {
   created_at: string;
 }
 
+export type AccountHistoryEventType =
+  | "account_created"
+  | "account_renamed"
+  | "account_deleted"
+  | "cash_holding_created"
+  | "cash_holding_updated"
+  | "cash_holding_deleted"
+  | "stock_holding_created"
+  | "stock_holding_updated"
+  | "stock_holding_deleted"
+  | "cpf_holdings_updated"
+  | "cpf_settings_updated";
+
+export interface AccountHistoryEvent {
+  id: string;
+  account_id: string | null;
+  user_id: string;
+  event_type: AccountHistoryEventType;
+  event_label: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AccountValueSnapshot {
+  id: string;
+  account_id: string | null;
+  user_id: string;
+  account_type: AccountType;
+  total_value: number;
+  currency: string;
+  snapshot_date: string;
+  created_at: string;
+}
+
 export interface UserPreferences {
   user_id: string;
   base_currency: string;
