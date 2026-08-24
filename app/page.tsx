@@ -28,6 +28,9 @@ export default function LandingPage() {
           <span className="text-xl font-bold">Track My Worth</span>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/features">
+            <Button variant="ghost">Features</Button>
+          </Link>
           <Link href="/login">
             <Button variant="ghost">Sign in</Button>
           </Link>
