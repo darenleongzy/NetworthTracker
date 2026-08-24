@@ -125,6 +125,30 @@ describe("account history helpers", () => {
     });
   });
 
+  it("includes a newly saved current-month snapshot in the monthly series", () => {
+    const now = new Date();
+    const snapshotDate = now.toISOString().split("T")[0];
+
+    const totals = aggregateMonthlyAccountTypeTotals(
+      [
+        {
+          id: "today-cash",
+          account_id: "cash-1",
+          user_id: "user-1",
+          account_type: "cash",
+          total_value: 2500,
+          currency: "USD",
+          snapshot_date: snapshotDate,
+          created_at: now.toISOString(),
+        },
+      ],
+      1
+    );
+
+    expect(totals).toHaveLength(1);
+    expect(totals[0]).toMatchObject({ cash: 2500, investment: 0, cpf: 0, srs: 0 });
+  });
+
   it("renders concise detail text for renamed accounts", () => {
     const event: AccountHistoryEvent = {
       id: "event-1",
