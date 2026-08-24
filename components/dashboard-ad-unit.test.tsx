@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { DashboardAdUnit } from "@/components/dashboard-ad-unit";
 
 const originalEnvironment = {
@@ -38,5 +38,21 @@ describe("DashboardAdUnit", () => {
     render(<DashboardAdUnit />);
 
     expect(screen.queryByLabelText("Advertisement")).not.toBeInTheDocument();
+  });
+
+  it("removes the placement when AdSense reports an unfilled slot", async () => {
+    process.env.NEXT_PUBLIC_ADS_ENABLED = "true";
+    process.env.NEXT_PUBLIC_ADSENSE_CLIENT = "ca-pub-9653219339886124";
+    process.env.NEXT_PUBLIC_ADSENSE_DASHBOARD_SLOT = "9533314002";
+    window.adsbygoogle = [];
+
+    render(<DashboardAdUnit />);
+    const ad = screen.getByLabelText("Advertisement").querySelector("ins");
+
+    act(() => ad?.setAttribute("data-ad-status", "unfilled"));
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Advertisement")).not.toBeInTheDocument();
+    });
   });
 });
