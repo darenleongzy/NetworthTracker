@@ -41,13 +41,13 @@ export default async function FirePage() {
   const expenses = (expensesRes.data ?? []) as Expense[];
   const baseCurrency = preferences.base_currency;
 
-  // Fetch exchange rates for base currency
-  const exchangeRates = await getExchangeRates(baseCurrency);
-
   // Collect all stock tickers and fetch prices
   const allStockHoldings = accounts.flatMap((a) => a.stock_holdings);
   const tickers = allStockHoldings.map((h) => h.ticker);
-  const prices = tickers.length > 0 ? await getStockPrices(tickers) : {};
+  const [exchangeRates, prices] = await Promise.all([
+    getExchangeRates(baseCurrency),
+    tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
+  ]);
 
   // Separate accounts by type
   const cashAccounts = accounts.filter((a) => a.type === "cash");

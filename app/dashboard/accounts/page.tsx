@@ -21,12 +21,13 @@ export default async function AccountsPage() {
 
   const typedAccounts = (accounts as AccountWithHoldings[]) ?? [];
   const baseCurrency = preferences.base_currency;
-  const exchangeRates = await getExchangeRates(baseCurrency);
-
   // Fetch stock prices for all investment accounts
   const allStockHoldings = typedAccounts.flatMap((a) => a.stock_holdings);
   const tickers = allStockHoldings.map((h) => h.ticker);
-  const stockPrices = tickers.length > 0 ? await getStockPrices(tickers) : {};
+  const [exchangeRates, stockPrices] = await Promise.all([
+    getExchangeRates(baseCurrency),
+    tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
+  ]);
 
   return (
     <div className="space-y-6">
