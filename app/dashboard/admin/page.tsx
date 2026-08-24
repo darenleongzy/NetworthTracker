@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignupSettingsPanel } from "@/components/admin/signup-settings";
 import { WaitlistTable } from "@/components/admin/waitlist-table";
 import { EmailQueue } from "@/components/admin/email-queue";
+import { AdWhitelist } from "@/components/admin/ad-whitelist";
 import {
   isCurrentUserAdmin,
   getSignupSettings,
@@ -10,8 +11,9 @@ import {
   getWaitlistStats,
   getEmailQueueEntries,
   getEmailQueueStats,
+  getAdFreeUsers,
 } from "@/lib/admin-actions";
-import { Settings, Users, Mail } from "lucide-react";
+import { Settings, Users, Mail, BadgeDollarSign } from "lucide-react";
 
 export default async function AdminPage() {
   // Check if current user is admin
@@ -21,12 +23,13 @@ export default async function AdminPage() {
   }
 
   // Fetch all data in parallel
-  const [signupSettings, waitlistData, waitlistStats, emailData, emailStats] = await Promise.all([
+  const [signupSettings, waitlistData, waitlistStats, emailData, emailStats, adFreeUsers] = await Promise.all([
     getSignupSettings(),
     getWaitlistEntries(1, 20),
     getWaitlistStats(),
     getEmailQueueEntries(1, 20),
     getEmailQueueStats(),
+    getAdFreeUsers(),
   ]);
 
   return (
@@ -52,6 +55,10 @@ export default async function AdminPage() {
             <Mail className="mr-2 h-4 w-4" />
             Email Queue
           </TabsTrigger>
+          <TabsTrigger value="ads">
+            <BadgeDollarSign className="mr-2 h-4 w-4" />
+            Ads
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings">
@@ -72,6 +79,10 @@ export default async function AdminPage() {
             initialStats={emailStats}
             totalCount={emailData.total}
           />
+        </TabsContent>
+
+        <TabsContent value="ads">
+          <AdWhitelist initialUsers={adFreeUsers} />
         </TabsContent>
       </Tabs>
     </div>

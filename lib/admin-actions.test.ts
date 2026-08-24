@@ -9,6 +9,7 @@ vi.mock("next/cache", () => ({
 const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
 const mockInvoke = vi.fn();
+const mockRpc = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockImplementation(() =>
@@ -20,6 +21,7 @@ vi.mock("@/lib/supabase/server", () => ({
       functions: {
         invoke: mockInvoke,
       },
+      rpc: mockRpc,
     })
   ),
 }));
@@ -34,6 +36,8 @@ import {
   getWaitlistEntries,
   getWaitlistStats,
   inviteWaitlistUsers,
+  getAdFreeUsers,
+  setUserAdFreeByEmail,
 } from "./admin-actions";
 
 // Helper to create chainable query mock
@@ -186,6 +190,70 @@ describe("admin-actions", () => {
       const result = await checkSignupAvailability();
 
       expect(result.showLimitedBanner).toBe(false);
+    });
+  });
+
+  describe("ad-free whitelist", () => {
+    it("returns ad-free users through the admin-only RPC", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "admin-1" } } });
+      mockFrom.mockReturnValue(
+        createQueryMock({ data: { id: "admin-record-1" }, error: null })
+      );
+      mockRpc.mockResolvedValue({
+        data: [
+          {
+            user_id: "user-1",
+            email: "ad-free@example.com",
+            created_at: "2026-08-24T00:00:00Z",
+          },
+        ],
+        error: null,
+      });
+
+      await expect(getAdFreeUsers()).resolves.toEqual([
+        {
+          user_id: "user-1",
+          email: "ad-free@example.com",
+          created_at: "2026-08-24T00:00:00Z",
+        },
+      ]);
+      expect(mockRpc).toHaveBeenCalledWith("admin_get_ad_free_users");
+    });
+
+    it("does not fail the Admin page before the whitelist migration is applied", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "admin-1" } } });
+      mockFrom.mockReturnValue(
+        createQueryMock({ data: { id: "admin-record-1" }, error: null })
+      );
+      mockRpc.mockResolvedValue({
+        data: null,
+        error: { code: "PGRST202", message: "Function not found" },
+      });
+
+      await expect(getAdFreeUsers()).resolves.toEqual([]);
+    });
+
+    it("validates an email before changing the whitelist", async () => {
+      await expect(setUserAdFreeByEmail("not-an-email", true)).rejects.toThrow(
+        "Enter a valid email address"
+      );
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it("adds a user to the whitelist through the admin RPC", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "admin-1" } } });
+      mockFrom.mockReturnValue(
+        createQueryMock({ data: { id: "admin-record-1" }, error: null })
+      );
+      mockRpc.mockResolvedValue({ data: null, error: null });
+
+      await expect(
+        setUserAdFreeByEmail("Ad-Free@Example.com", true)
+      ).resolves.toBeUndefined();
+      expect(mockRpc).toHaveBeenCalledWith("admin_set_user_ad_free_by_email", {
+        target_email: "ad-free@example.com",
+        ad_free: true,
+      });
     });
   });
 

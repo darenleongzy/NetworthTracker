@@ -49,6 +49,12 @@ export interface EmailQueueStats {
   failed: number;
 }
 
+export interface AdFreeUser {
+  user_id: string;
+  email: string;
+  created_at: string;
+}
+
 // ── Helpers ──
 
 async function requireAdmin() {
@@ -208,6 +214,35 @@ export async function updateSignupSettings(
     .eq("id", 1);
 
   if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/admin");
+}
+
+export async function getAdFreeUsers(): Promise<AdFreeUser[]> {
+  const { supabase } = await requireAdmin();
+  const { data, error } = await supabase.rpc("admin_get_ad_free_users");
+
+  // Keep the existing Admin page available until migration 014 is applied.
+  if (error?.code === "PGRST202") return [];
+  if (error) throw new Error(error.message);
+  return (data ?? []) as AdFreeUser[];
+}
+
+export async function setUserAdFreeByEmail(
+  email: string,
+  adFree: boolean
+): Promise<void> {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Enter a valid email address");
+  }
+
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.rpc("admin_set_user_ad_free_by_email", {
+    target_email: email.trim().toLowerCase(),
+    ad_free: adFree,
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/dashboard/admin");
 }
 

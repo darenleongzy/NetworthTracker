@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
@@ -16,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 const siteUrl = "https://trackmyworth.xyz";
+const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
 
 export const metadata: Metadata = {
   title: {
@@ -88,6 +90,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {adsenseClient?.startsWith("ca-pub-") && (
+          <Script
+            id="adsense-verification"
+            async
+            crossOrigin="anonymous"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
+            strategy="beforeInteractive"
+          />
+        )}
         {children}
         <Toaster />
         <Analytics />
