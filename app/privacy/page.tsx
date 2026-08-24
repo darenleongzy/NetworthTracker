@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <LegalPage
-      eyebrow="Last updated March 25, 2026"
+      eyebrow="Last updated August 24, 2026"
       title="Privacy Policy"
       summary="This Privacy Policy explains what information Track My Worth collects, how it is used, and the choices available to you when you use the web app or mobile app."
     >
@@ -112,6 +112,34 @@ export default function PrivacyPage() {
             the service, or the public.
           </li>
         </ul>
+      </LegalSection>
+
+      <LegalSection title="Advertising and choices">
+        <p>
+          Track My Worth may display a limited advertisement within the
+          signed-in web dashboard. Ads are not shown on public pages, the
+          mobile app, or to users the service has marked as ad-free.
+        </p>
+        <p>
+          When advertising is enabled, advertising providers may use cookies,
+          web beacons, IP addresses, or similar identifiers to serve and
+          measure ads, subject to your consent where required by law. For more
+          information about Google&apos;s data practices, see{" "}
+          <a
+            href="https://policies.google.com/technologies/partner-sites"
+            className="text-primary underline underline-offset-4"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            How Google uses information from sites or apps that use its services
+          </a>
+          .
+        </p>
+        <p>
+          If required for your location, Track My Worth will request consent
+          before enabling advertising technologies. You can contact support to
+          ask about advertising-related choices or ad-free access.
+        </p>
       </LegalSection>
 
       <LegalSection title="Data storage and security">

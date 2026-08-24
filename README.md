@@ -54,7 +54,23 @@ Environment:
 
 - Web uses the repo-root `.env.local` with:
   - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+### Optional dashboard ads
+
+Ads are only rendered inside the signed-in dashboard and are disabled by
+default. To enable the single, low-impact dashboard placement after your
+AdSense account and consent flow are ready, add the following production
+environment variables in Vercel:
+
+- `NEXT_PUBLIC_ADS_ENABLED=true`
+- `NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-...`
+- `NEXT_PUBLIC_ADSENSE_DASHBOARD_SLOT=...`
+
+Admins can exempt a user by email from the dashboard Admin > Ads tab. Apply
+the `014_ad_free_users.sql` migration before using the whitelist. Do not enable
+ads for EEA, UK, or Swiss traffic until an AdSense-compatible consent flow is
+configured.
 - Mobile uses `apps/mobile/.env.local` with:
   - `EXPO_PUBLIC_SUPABASE_URL`
   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`

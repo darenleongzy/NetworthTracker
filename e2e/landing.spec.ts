@@ -66,6 +66,14 @@ test.describe("Landing Page", () => {
     await page.getByRole("link", { name: /Request Access/i }).first().click();
     await expect(page).toHaveURL("/signup");
   });
+
+  test("never exposes dashboard ads on public pages", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByLabel("Advertisement")).toHaveCount(0);
+
+    await page.goto("/features");
+    await expect(page.getByLabel("Advertisement")).toHaveCount(0);
+  });
 });
 
 test.describe("SEO Files", () => {
