@@ -8,12 +8,7 @@ import {
   calculateInvestmentCost,
   getCurrentMonthExpenses,
 } from "@/lib/calculations";
-import {
-  getAccountTypeValueSnapshots,
-  getUserPreferences,
-  saveAccountSnapshots,
-  saveSnapshot,
-} from "@/lib/actions";
+import { getUserPreferences, saveAccountSnapshots, saveSnapshot } from "@/lib/actions";
 import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
 import { SummaryCards } from "@/components/summary-cards";
 import { BaseCurrencySelector } from "@/components/base-currency-selector";
@@ -24,13 +19,23 @@ import { ExpenseBreakdownChart } from "@/components/charts/expense-breakdown-cha
 import { HoldingsOverview } from "@/components/holdings-overview";
 import { AccountTypeMonthlyChart } from "@/components/charts/account-type-monthly-chart";
 import { DashboardAd } from "@/components/dashboard-ad";
-import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
+import { logSlowOperation } from "@/lib/performance";
+import { calculateAccountTotalValue } from "@/lib/account-history";
+import type {
+  Account,
+  AccountValueSnapshot,
+  AccountWithHoldings,
+  CashHolding,
+  StockHolding,
+  Expense,
+} from "@/lib/types";
 
 export default async function DashboardPage() {
+  const pageStartedAt = Date.now();
   const supabase = await createClient();
 
   // Fetch all user data in parallel
-  const [accountsRes, snapshotsRes, expensesRes, preferences] = await Promise.all([
+  const [accountsRes, snapshotsRes, expensesRes, preferences, accountSnapshotsRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
@@ -45,6 +50,10 @@ export default async function DashboardPage() {
       .select("*")
       .order("expense_date", { ascending: false }),
     getUserPreferences(),
+    supabase
+      .from("account_value_snapshots")
+      .select("*")
+      .order("snapshot_date", { ascending: true }),
   ]);
 
   const accounts = (accountsRes.data ?? []) as (Account & {
@@ -57,12 +66,13 @@ export default async function DashboardPage() {
   const baseCurrency = preferences.base_currency;
 
   // Fetch exchange rates for base currency
-  const exchangeRates = await getExchangeRates(baseCurrency);
-
   // Collect all stock tickers and fetch prices
   const allStockHoldings = accounts.flatMap((a) => a.stock_holdings);
   const tickers = allStockHoldings.map((h) => h.ticker);
-  const prices = tickers.length > 0 ? await getStockPrices(tickers) : {};
+  const [exchangeRates, prices] = await Promise.all([
+    getExchangeRates(baseCurrency),
+    tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
+  ]);
 
   // Separate accounts by type
   const cashAccounts = accounts.filter((a) => a.type === "cash");
@@ -95,18 +105,52 @@ export default async function DashboardPage() {
   const totalGainLoss = investmentValue - investmentCost;
   // Save today's snapshot (always in current base currency value)
   const today = new Date().toISOString().split("T")[0];
+  // Use the current calculations for the chart so it stays fresh even when the
+  // database query was made before today's snapshot upsert.
+  const accountTypeSnapshotRows = (accountSnapshotsRes.data ?? []) as AccountValueSnapshot[];
+  const currentAccountSnapshots: AccountValueSnapshot[] = accounts.map((account) => ({
+    id: `current-${account.id}`,
+    account_id: account.id,
+    user_id: account.user_id,
+    account_type: account.type,
+    total_value: calculateAccountTotalValue(
+      account as AccountWithHoldings,
+      baseCurrency,
+      exchangeRates,
+      prices
+    ),
+    currency: baseCurrency,
+    snapshot_date: today,
+    created_at: new Date().toISOString(),
+  }));
+  const currentAccountIds = new Set(currentAccountSnapshots.map((snapshot) => snapshot.account_id));
+  const accountTypeSnapshots = [
+    ...accountTypeSnapshotRows.filter(
+      (snapshot) =>
+        snapshot.snapshot_date !== today || !currentAccountIds.has(snapshot.account_id)
+    ),
+    ...currentAccountSnapshots,
+  ];
+
   if (accounts.length > 0) {
+    const snapshotStartedAt = Date.now();
     try {
-      await saveSnapshot(totalNetWorth, cashTotal, investmentValue, baseCurrency);
-      await saveAccountSnapshots(accounts, baseCurrency, exchangeRates, prices);
-    } catch {
-      // Snapshot save is best-effort
+      await Promise.all([
+        saveSnapshot(totalNetWorth, cashTotal, investmentValue, baseCurrency),
+        saveAccountSnapshots(accounts, baseCurrency, exchangeRates, prices),
+      ]);
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          level: "error",
+          message: "dashboard_snapshot_save_failed",
+          error: error instanceof Error ? error.message : String(error),
+        })
+      );
+    } finally {
+      logSlowOperation("dashboard_snapshot_save", snapshotStartedAt);
     }
   }
-
-  // Read after today's account snapshots are upserted so range controls always
-  // include the latest account values on the first dashboard visit.
-  const accountTypeSnapshots = await getAccountTypeValueSnapshots();
 
   // Convert historical snapshots to current base currency
   // and update today's snapshot with current calculated values
@@ -156,6 +200,11 @@ export default async function DashboardPage() {
       created_at: new Date().toISOString(),
     });
   }
+
+  logSlowOperation("dashboard_page_load", pageStartedAt, {
+    account_count: accounts.length,
+    ticker_count: tickers.length,
+  });
 
   return (
     <div className="space-y-6">

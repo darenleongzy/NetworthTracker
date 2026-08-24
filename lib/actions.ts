@@ -10,6 +10,7 @@ import {
 } from "@/lib/account-history";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { getStockPrices, refreshStockPriceIfStale } from "@/lib/stock-api";
+import { logSlowOperation } from "@/lib/performance";
 import type {
   AccountHistoryEventType,
   AccountType,
@@ -78,35 +79,45 @@ async function saveAccountSnapshotForAccount(
   userId: string,
   accountId: string
 ) {
-  const supabase = await createClient();
-  const account = await getAccountWithHoldingsForSnapshot(accountId);
-  const preferences = await getUserPreferences();
-  const baseCurrency = preferences.base_currency;
-  const exchangeRates = await getExchangeRates(baseCurrency);
-  const tickers = account.stock_holdings.map((holding) => holding.ticker);
-  const stockPrices = tickers.length > 0 ? await getStockPrices(tickers) : {};
-  const totalValue = calculateAccountTotalValue(
-    account,
-    baseCurrency,
-    exchangeRates,
-    stockPrices
-  );
-  const today = new Date().toISOString().split("T")[0];
+  const startedAt = Date.now();
 
-  const { error } = await supabase.from("account_value_snapshots").upsert(
-    buildSnapshotRecord(
-      account.id,
-      userId,
-      account.type,
-      totalValue,
+  try {
+    const supabase = await createClient();
+    const [account, preferences] = await Promise.all([
+      getAccountWithHoldingsForSnapshot(accountId),
+      getUserPreferences(),
+    ]);
+    const baseCurrency = preferences.base_currency;
+    const tickers = account.stock_holdings.map((holding) => holding.ticker);
+    const [exchangeRates, stockPrices] = await Promise.all([
+      getExchangeRates(baseCurrency),
+      tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
+    ]);
+    const totalValue = calculateAccountTotalValue(
+      account,
       baseCurrency,
-      today
-    ),
-    { onConflict: "account_id,snapshot_date" }
-  );
+      exchangeRates,
+      stockPrices
+    );
+    const today = new Date().toISOString().split("T")[0];
 
-  if (error) {
-    throw new Error(error.message);
+    const { error } = await supabase.from("account_value_snapshots").upsert(
+      buildSnapshotRecord(
+        account.id,
+        userId,
+        account.type,
+        totalValue,
+        baseCurrency,
+        today
+      ),
+      { onConflict: "account_id,snapshot_date" }
+    );
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  } finally {
+    logSlowOperation("account_snapshot_rebuild", startedAt, { account_id: accountId });
   }
 }
 
@@ -243,21 +254,15 @@ export async function upsertCashHolding(
 
   if (holdingId) {
     // Verify holding belongs to user's account
-    const { data: holding } = await supabase
-      .from("cash_holdings")
-      .select("account_id")
-      .eq("id", holdingId)
-      .single();
-
-    if (!holding || holding.account_id !== accountId) {
-      throw new Error("Holding not found");
-    }
-
     const { data: existingHolding } = await supabase
       .from("cash_holdings")
-      .select("balance, currency, label")
+      .select("account_id, balance, currency, label")
       .eq("id", holdingId)
       .single();
+
+    if (!existingHolding || existingHolding.account_id !== accountId) {
+      throw new Error("Holding not found");
+    }
 
     const { error } = await supabase
       .from("cash_holdings")
@@ -321,7 +326,7 @@ export async function upsertCpfHoldings(
   // Verify account ownership
   const { data: account } = await supabase
     .from("accounts")
-    .select("user_id")
+    .select("user_id, name")
     .eq("id", accountId)
     .single();
 
@@ -329,26 +334,16 @@ export async function upsertCpfHoldings(
     throw new Error("Account not found");
   }
 
-  const { data: accountRecord } = await supabase
-    .from("accounts")
-    .select("name")
-    .eq("id", accountId)
-    .single();
-
   // Get existing CPF holdings for this account
   const { data: existing } = await supabase
     .from("cash_holdings")
-    .select("id, label")
+    .select("id, label, balance")
     .eq("account_id", accountId)
     .in("label", ["OA", "SA", "MA"]);
 
   const existingMap = new Map(existing?.map((h) => [h.label, h.id]) ?? []);
   const previousValues = new Map(
-    ((await supabase
-      .from("cash_holdings")
-      .select("label, balance")
-      .eq("account_id", accountId)
-      .in("label", ["OA", "SA", "MA"])).data ?? []).map((holding) => [
+    (existing ?? []).map((holding) => [
       holding.label ?? "",
       Number(holding.balance),
     ])
@@ -381,7 +376,7 @@ export async function upsertCpfHoldings(
       user.id,
       accountId,
       "cpf_holdings_updated",
-      accountRecord?.name ?? "CPF Account",
+      account.name ?? "CPF Account",
       {
         updatedLabels: changedLabels,
         before: Object.fromEntries(
@@ -544,7 +539,7 @@ export async function deleteCashHolding(id: string) {
   // Verify ownership via account
   const { data: holding } = await supabase
     .from("cash_holdings")
-    .select("account_id, accounts(user_id)")
+    .select("account_id, balance, currency, label, accounts(user_id)")
     .eq("id", id)
     .single();
 
@@ -553,11 +548,6 @@ export async function deleteCashHolding(id: string) {
     throw new Error("Holding not found");
   }
 
-  const { data: holdingRecord } = await supabase
-    .from("cash_holdings")
-    .select("account_id, balance, currency, label")
-    .eq("id", id)
-    .single();
   const { data: accountRecord } = await supabase
     .from("accounts")
     .select("name")
@@ -572,9 +562,9 @@ export async function deleteCashHolding(id: string) {
     "cash_holding_deleted",
     accountRecord?.name ?? "Account",
     {
-      label: holdingRecord?.label ?? null,
-      currency: holdingRecord?.currency ?? "USD",
-      previousBalance: Number(holdingRecord?.balance ?? 0),
+      label: holding.label ?? null,
+      currency: holding.currency ?? "USD",
+      previousBalance: Number(holding.balance ?? 0),
     }
   );
   await saveAccountSnapshotForAccount(user.id, holding.account_id);
@@ -618,21 +608,15 @@ export async function upsertStockHolding(
 
   if (holdingId) {
     // Verify holding belongs to user's account
-    const { data: holding } = await supabase
-      .from("stock_holdings")
-      .select("account_id")
-      .eq("id", holdingId)
-      .single();
-
-    if (!holding || holding.account_id !== accountId) {
-      throw new Error("Holding not found");
-    }
-
     const { data: existingHolding } = await supabase
       .from("stock_holdings")
-      .select("ticker, shares, cost_basis_per_share")
+      .select("account_id, ticker, shares, cost_basis_per_share")
       .eq("id", holdingId)
       .single();
+
+    if (!existingHolding || existingHolding.account_id !== accountId) {
+      throw new Error("Holding not found");
+    }
 
     const { error } = await supabase
       .from("stock_holdings")
@@ -686,13 +670,12 @@ export async function upsertStockHolding(
     );
   }
 
-  // Refresh stock price if stale (older than 24 hours)
+  // Refresh stock price if stale (older than 24 hours).
+  // Price refresh failures should not prevent the holding itself from saving.
   try {
-    const price = await refreshStockPriceIfStale(upperTicker);
-    console.log(`Stock price for ${upperTicker}: ${price}`);
+    await refreshStockPriceIfStale(upperTicker);
   } catch (error) {
     console.error(`Failed to refresh stock price for ${upperTicker}:`, error);
-    // Don't throw - price refresh failure shouldn't block the save
   }
 
   await saveAccountSnapshotForAccount(user.id, accountId);
@@ -712,7 +695,7 @@ export async function deleteStockHolding(id: string) {
   // Verify ownership via account
   const { data: holding } = await supabase
     .from("stock_holdings")
-    .select("account_id, accounts(user_id)")
+    .select("account_id, ticker, shares, cost_basis_per_share, accounts(user_id)")
     .eq("id", id)
     .single();
 
@@ -721,11 +704,6 @@ export async function deleteStockHolding(id: string) {
     throw new Error("Holding not found");
   }
 
-  const { data: holdingRecord } = await supabase
-    .from("stock_holdings")
-    .select("account_id, ticker, shares, cost_basis_per_share")
-    .eq("id", id)
-    .single();
   const { data: accountRecord } = await supabase
     .from("accounts")
     .select("name")
@@ -743,9 +721,9 @@ export async function deleteStockHolding(id: string) {
     "stock_holding_deleted",
     accountRecord?.name ?? "Account",
     {
-      ticker: holdingRecord?.ticker ?? null,
-      previousShares: Number(holdingRecord?.shares ?? 0),
-      previousCostBasisPerShare: Number(holdingRecord?.cost_basis_per_share ?? 0),
+      ticker: holding.ticker ?? null,
+      previousShares: Number(holding.shares ?? 0),
+      previousCostBasisPerShare: Number(holding.cost_basis_per_share ?? 0),
     }
   );
   await saveAccountSnapshotForAccount(user.id, holding.account_id);

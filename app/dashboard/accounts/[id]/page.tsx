@@ -40,12 +40,13 @@ export default async function AccountDetailPage({
   ]);
 
   const baseCurrency = preferences.base_currency;
-  const exchangeRates = await getExchangeRates(baseCurrency);
-
   // Fetch stock prices if this is an investment account
   const stockHoldings = (account as AccountWithHoldings).stock_holdings;
   const tickers = stockHoldings.map((h) => h.ticker);
-  const stockPrices = tickers.length > 0 ? await getStockPrices(tickers) : {};
+  const [exchangeRates, stockPrices] = await Promise.all([
+    getExchangeRates(baseCurrency),
+    tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
+  ]);
 
   return (
     <AccountDetail
