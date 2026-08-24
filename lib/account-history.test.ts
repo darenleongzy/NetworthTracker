@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  aggregateAccountTypeHistory,
   aggregateMonthlyAccountTypeTotals,
   calculateAccountTotalValue,
   describeAccountHistoryEvent,
@@ -123,6 +124,42 @@ describe("account history helpers", () => {
       cpf: 0,
       srs: 0,
     });
+  });
+
+  it("builds daily and monthly account history ranges without leading zero lines", () => {
+    const now = new Date("2026-08-24T12:00:00.000Z");
+    const snapshots: AccountValueSnapshot[] = [
+      {
+        id: "cash-1",
+        account_id: "cash-1",
+        user_id: "user-1",
+        account_type: "cash",
+        total_value: 500,
+        currency: "USD",
+        snapshot_date: "2026-08-23",
+        created_at: "2026-08-23T00:00:00.000Z",
+      },
+      {
+        id: "investment-1",
+        account_id: "investment-1",
+        user_id: "user-1",
+        account_type: "investment",
+        total_value: 1200,
+        currency: "USD",
+        snapshot_date: "2026-08-24",
+        created_at: "2026-08-24T00:00:00.000Z",
+      },
+    ];
+
+    const week = aggregateAccountTypeHistory(snapshots, "week", now);
+    const year = aggregateAccountTypeHistory(snapshots, "year", now);
+
+    expect(week).toHaveLength(7);
+    expect(week[0]).toMatchObject({ cash: null, investment: null });
+    expect(week[5]).toMatchObject({ cash: 500, investment: null });
+    expect(week[6]).toMatchObject({ cash: 500, investment: 1200 });
+    expect(year).toHaveLength(12);
+    expect(year.at(-1)).toMatchObject({ cash: 500, investment: 1200 });
   });
 
   it("renders concise detail text for renamed accounts", () => {

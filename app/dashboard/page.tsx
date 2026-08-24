@@ -8,8 +8,12 @@ import {
   calculateInvestmentCost,
   getCurrentMonthExpenses,
 } from "@/lib/calculations";
-import { saveSnapshot, getUserPreferences } from "@/lib/actions";
-import { getMonthlyAccountTypeTotals, saveAccountSnapshots } from "@/lib/actions";
+import {
+  getAccountTypeValueSnapshots,
+  getUserPreferences,
+  saveAccountSnapshots,
+  saveSnapshot,
+} from "@/lib/actions";
 import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
 import { SummaryCards } from "@/components/summary-cards";
 import { BaseCurrencySelector } from "@/components/base-currency-selector";
@@ -25,7 +29,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
 
   // Fetch all user data in parallel
-  const [accountsRes, snapshotsRes, expensesRes, preferences, monthlyAccountTypeTotals] = await Promise.all([
+  const [accountsRes, snapshotsRes, expensesRes, preferences] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
@@ -40,7 +44,6 @@ export default async function DashboardPage() {
       .select("*")
       .order("expense_date", { ascending: false }),
     getUserPreferences(),
-    getMonthlyAccountTypeTotals(),
   ]);
 
   const accounts = (accountsRes.data ?? []) as (Account & {
@@ -99,6 +102,10 @@ export default async function DashboardPage() {
       // Snapshot save is best-effort
     }
   }
+
+  // Read after today's account snapshots are upserted so range controls always
+  // include the latest account values on the first dashboard visit.
+  const accountTypeSnapshots = await getAccountTypeValueSnapshots();
 
   // Convert historical snapshots to current base currency
   // and update today's snapshot with current calculated values
@@ -195,7 +202,7 @@ export default async function DashboardPage() {
       )}
 
       <AccountTypeMonthlyChart
-        data={monthlyAccountTypeTotals}
+        snapshots={accountTypeSnapshots}
         baseCurrency={baseCurrency}
       />
 

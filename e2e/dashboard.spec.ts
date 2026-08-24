@@ -59,6 +59,20 @@ test.describe("Dashboard", () => {
     await expect(page.getByTestId("net-worth")).toBeVisible();
   });
 
+  test("switches the account history chart range", async ({ page }) => {
+    await login(page);
+
+    const rangeControls = page.getByLabel("Account history range");
+    await expect(rangeControls.getByRole("button", { name: "Week" })).toBeVisible();
+    await expect(rangeControls.getByRole("button", { name: "Month" })).toBeVisible();
+    await expect(rangeControls.getByRole("button", { name: "Year" })).toBeVisible();
+
+    await rangeControls.getByRole("button", { name: "Week" }).click();
+    await expect(rangeControls.getByRole("button", { name: "Week" })).toHaveClass(
+      /bg-background/
+    );
+  });
+
   test("sidebar navigation works", async ({ page }) => {
     await login(page);
 

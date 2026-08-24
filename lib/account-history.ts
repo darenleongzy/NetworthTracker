@@ -21,6 +21,16 @@ export type MonthlyAccountTypeTotal = {
   srs: number;
 };
 
+export type AccountHistoryRange = "week" | "month" | "year";
+
+export type AccountTypeHistoryPoint = {
+  label: string;
+  cash: number | null;
+  investment: number | null;
+  cpf: number | null;
+  srs: number | null;
+};
+
 export type AccountHistoryDetail = {
   label: string;
   value: string;
@@ -101,6 +111,77 @@ export function aggregateMonthlyAccountTypeTotals(
         year: "2-digit",
       }),
       ...totals,
+    });
+  }
+
+  return result;
+}
+
+export function aggregateAccountTypeHistory(
+  snapshots: AccountValueSnapshot[],
+  range: AccountHistoryRange,
+  now = new Date()
+): AccountTypeHistoryPoint[] {
+  const config = {
+    week: { periods: 7, unit: "day" },
+    month: { periods: 30, unit: "day" },
+    year: { periods: 12, unit: "month" },
+  } as const;
+  const { periods, unit } = config[range];
+  const sortedSnapshots = [...snapshots].sort((left, right) =>
+    new Date(`${left.snapshot_date}T00:00:00Z`).getTime() -
+    new Date(`${right.snapshot_date}T00:00:00Z`).getTime()
+  );
+  const latestAccountSnapshots = new Map<string, AccountValueSnapshot>();
+  const seenTypes = new Set<AccountType>();
+  const result: AccountTypeHistoryPoint[] = [];
+  let snapshotIndex = 0;
+
+  for (let index = periods - 1; index >= 0; index -= 1) {
+    const periodStart =
+      unit === "day"
+        ? new Date(
+            Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - index)
+          )
+        : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - index, 1));
+    const nextPeriodStart =
+      unit === "day"
+        ? new Date(
+            Date.UTC(
+              periodStart.getUTCFullYear(),
+              periodStart.getUTCMonth(),
+              periodStart.getUTCDate() + 1
+            )
+          )
+        : new Date(
+            Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1)
+          );
+
+    while (snapshotIndex < sortedSnapshots.length) {
+      const snapshot = sortedSnapshots[snapshotIndex];
+      const snapshotDate = new Date(`${snapshot.snapshot_date}T00:00:00Z`);
+      if (snapshotDate >= nextPeriodStart) break;
+
+      const accountKey = snapshot.account_id ?? snapshot.id;
+      latestAccountSnapshots.set(accountKey, snapshot);
+      seenTypes.add(snapshot.account_type);
+      snapshotIndex += 1;
+    }
+
+    const totals = { cash: 0, investment: 0, cpf: 0, srs: 0 };
+    for (const snapshot of latestAccountSnapshots.values()) {
+      totals[snapshot.account_type] += Number(snapshot.total_value);
+    }
+
+    result.push({
+      label: periodStart.toLocaleDateString("en-US", {
+        month: "short",
+        ...(unit === "day" ? { day: "numeric" } : { year: "2-digit" }),
+      }),
+      cash: seenTypes.has("cash") ? totals.cash : null,
+      investment: seenTypes.has("investment") ? totals.investment : null,
+      cpf: seenTypes.has("cpf") ? totals.cpf : null,
+      srs: seenTypes.has("srs") ? totals.srs : null,
     });
   }
 
