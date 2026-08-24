@@ -960,6 +960,23 @@ export async function getMonthlyAccountTypeTotals() {
   return aggregateMonthlyAccountTypeTotals((data ?? []) as AccountValueSnapshot[]);
 }
 
+export async function getAccountTypeValueSnapshots() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("account_value_snapshots")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("snapshot_date", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as AccountValueSnapshot[];
+}
+
 // ── Expenses ──
 
 export async function createExpense(

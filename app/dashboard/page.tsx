@@ -9,7 +9,7 @@ import {
   getCurrentMonthExpenses,
 } from "@/lib/calculations";
 import {
-  getMonthlyAccountTypeTotals,
+  getAccountTypeValueSnapshots,
   getUserPreferences,
   saveAccountSnapshots,
   saveSnapshot,
@@ -23,6 +23,7 @@ import { GainsChart } from "@/components/charts/gains-chart";
 import { ExpenseBreakdownChart } from "@/components/charts/expense-breakdown-chart";
 import { HoldingsOverview } from "@/components/holdings-overview";
 import { AccountTypeMonthlyChart } from "@/components/charts/account-type-monthly-chart";
+import { DashboardAd } from "@/components/dashboard-ad";
 import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
 
 export default async function DashboardPage() {
@@ -103,9 +104,9 @@ export default async function DashboardPage() {
     }
   }
 
-  // Read after today's account snapshots are upserted so a first dashboard visit
-  // renders the current monthly totals instead of a stale, empty series.
-  const monthlyAccountTypeTotals = await getMonthlyAccountTypeTotals();
+  // Read after today's account snapshots are upserted so range controls always
+  // include the latest account values on the first dashboard visit.
+  const accountTypeSnapshots = await getAccountTypeValueSnapshots();
 
   // Convert historical snapshots to current base currency
   // and update today's snapshot with current calculated values
@@ -197,12 +198,14 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <DashboardAd />
+
       {snapshots.length > 1 && (
         <GainsChart snapshots={snapshots} />
       )}
 
       <AccountTypeMonthlyChart
-        data={monthlyAccountTypeTotals}
+        snapshots={accountTypeSnapshots}
         baseCurrency={baseCurrency}
       />
 

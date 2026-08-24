@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -12,27 +13,46 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrencySymbol } from "@/lib/currencies";
-import type { MonthlyAccountTypeTotal } from "@/lib/account-history";
+import {
+  aggregateAccountTypeHistory,
+  type AccountHistoryRange,
+} from "@/lib/account-history";
+import type { AccountValueSnapshot } from "@/lib/types";
+
+const SERIES = [
+  { key: "cash", label: "Cash", color: "#22c55e" },
+  { key: "investment", label: "Investments", color: "#3b82f6" },
+  { key: "cpf", label: "CPF", color: "#f59e0b" },
+  { key: "srs", label: "SRS", color: "#8b5cf6" },
+] as const;
+
+const RANGE_OPTIONS: { value: AccountHistoryRange; label: string }[] = [
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
+];
 
 export function AccountTypeMonthlyChart({
-  data,
+  snapshots,
   baseCurrency,
 }: {
-  data: MonthlyAccountTypeTotal[];
+  snapshots: AccountValueSnapshot[];
   baseCurrency: string;
 }) {
-  const hasAnyValue = data.some(
-    (row) => row.cash || row.investment || row.cpf || row.srs
+  const [range, setRange] = useState<AccountHistoryRange>("year");
+  const data = aggregateAccountTypeHistory(snapshots, range);
+  const hasAnyValue = data.some((row) =>
+    SERIES.some((series) => row[series.key] !== null)
   );
 
   if (!hasAnyValue) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Totals by Account Type</CardTitle>
+          <CardTitle>Account Totals by Type</CardTitle>
         </CardHeader>
         <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          No account history yet. Monthly totals will appear after daily account snapshots are saved.
+          No account history yet. Daily snapshots will begin building this view after you add an account.
         </CardContent>
       </Card>
     );
@@ -42,19 +62,44 @@ export function AccountTypeMonthlyChart({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Monthly Totals by Account Type</CardTitle>
+      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>Account Totals by Type</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            End-of-period values from saved account snapshots.
+          </p>
+        </div>
+        <div
+          aria-label="Account history range"
+          className="inline-flex w-fit rounded-lg border bg-muted/50 p-1"
+        >
+          {RANGE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setRange(option.value)}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                range === option.value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="month" className="text-xs" />
+            <XAxis dataKey="label" className="text-xs" minTickGap={24} />
             <YAxis
               className="text-xs"
               tickFormatter={(value) => `${symbol}${Number(value).toLocaleString()}`}
             />
             <Tooltip
+              cursor={{ stroke: "hsl(var(--muted-foreground))", strokeDasharray: "3 3" }}
               formatter={(value: number) =>
                 `${symbol}${value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -63,10 +108,20 @@ export function AccountTypeMonthlyChart({
               }
             />
             <Legend />
-            <Line type="monotone" dataKey="cash" name="Cash" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="investment" name="Investments" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="cpf" name="CPF" stroke="hsl(var(--chart-3))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="srs" name="SRS" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} />
+            {SERIES.map((series) => (
+              <Line
+                key={series.key}
+                type="monotone"
+                dataKey={series.key}
+                name={series.label}
+                stroke={series.color}
+                strokeWidth={3}
+                dot={{ r: 2.5, fill: series.color, strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: series.color, stroke: "#ffffff", strokeWidth: 2 }}
+                connectNulls={false}
+                isAnimationActive={false}
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
