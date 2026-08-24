@@ -75,7 +75,6 @@ test.describe("SEO Files", () => {
 
     const content = await page.content();
     expect(content).toContain("User-Agent: *");
-    expect(content).toContain("Disallow: /dashboard/");
     expect(content).toContain("Sitemap:");
   });
 
@@ -86,5 +85,31 @@ test.describe("SEO Files", () => {
     const content = await page.content();
     expect(content).toContain("urlset");
     expect(content).toContain("trackmyworth.xyz");
+    expect(content).toContain("https://trackmyworth.xyz/features");
+    expect(content).toContain("https://trackmyworth.xyz/privacy");
+    expect(content).toContain("https://trackmyworth.xyz/terms");
+    expect(content).toContain("https://trackmyworth.xyz/delete-account");
+  });
+});
+
+test.describe("Feature Discovery Page", () => {
+  test("is public, descriptive, and links users to sign up", async ({ page }) => {
+    await page.goto("/features");
+
+    await expect(
+      page.getByRole("heading", {
+        name: /One place for your net worth, CPF and FIRE plans/i,
+      })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /CPF OA, SA and MA projections/i })
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: /Start tracking your worth/i })).toBeVisible();
+
+    await expect(page).toHaveTitle(/Singapore Net Worth, CPF and FIRE Planner Features/i);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      "https://trackmyworth.xyz/features"
+    );
   });
 });
