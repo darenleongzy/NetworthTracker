@@ -23,6 +23,7 @@ import { GainsChart } from "@/components/charts/gains-chart";
 import { ExpenseBreakdownChart } from "@/components/charts/expense-breakdown-chart";
 import { HoldingsOverview } from "@/components/holdings-overview";
 import { AccountTypeMonthlyChart } from "@/components/charts/account-type-monthly-chart";
+import { DashboardAd } from "@/components/dashboard-ad";
 import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
 
 export default async function DashboardPage() {
@@ -196,6 +197,8 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
+
+      <DashboardAd />
 
       {snapshots.length > 1 && (
         <GainsChart snapshots={snapshots} />
