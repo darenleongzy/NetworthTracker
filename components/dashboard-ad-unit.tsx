@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAdSenseDashboardConfig } from "@/lib/ads";
 
 declare global {
@@ -12,6 +12,7 @@ declare global {
 export function DashboardAdUnit() {
   const config = getAdSenseDashboardConfig();
   const adRef = useRef<HTMLModElement>(null);
+  const [isUnfilled, setIsUnfilled] = useState(false);
 
   useEffect(() => {
     if (!config || !adRef.current || adRef.current.dataset.initialized) {
@@ -24,9 +25,29 @@ export function DashboardAdUnit() {
     } catch {
       // An ad failure must not affect a signed-in user's dashboard.
     }
-  }, [config]);
+  }, [config?.client, config?.slot]);
 
-  if (!config) {
+  useEffect(() => {
+    const ad = adRef.current;
+    if (!config || !ad) {
+      return;
+    }
+
+    const updateFillState = () => {
+      setIsUnfilled(ad.dataset.adStatus === "unfilled");
+    };
+    const observer = new MutationObserver(updateFillState);
+
+    updateFillState();
+    observer.observe(ad, {
+      attributes: true,
+      attributeFilter: ["data-ad-status"],
+    });
+
+    return () => observer.disconnect();
+  }, [config?.client, config?.slot]);
+
+  if (!config || isUnfilled) {
     return null;
   }
 
