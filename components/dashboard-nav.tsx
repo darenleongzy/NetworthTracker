@@ -30,10 +30,10 @@ const navItems = [
   { href: "/dashboard/accounts", label: "Accounts", icon: Wallet },
   { href: "/dashboard/expenses", label: "Expenses", icon: Receipt },
   { href: "/dashboard/fire", label: "FIRE", icon: Flame },
-  { href: "/dashboard/couple", label: "Couple", icon: Heart },
+  { href: "/dashboard/couple", label: "Couple", icon: Heart, isNew: true },
 ];
 
-const adminNavItem = { href: "/dashboard/admin", label: "Admin", icon: Shield };
+const adminNavItem = { href: "/dashboard/admin", label: "Admin", icon: Shield, isNew: false };
 
 type Theme = "light" | "dark";
 
@@ -111,6 +111,11 @@ function NavContent({
             >
               <item.icon className="mr-2 h-4 w-4" />
               {item.label}
+              {item.isNew ? (
+                <span className="ml-auto rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                  New
+                </span>
+              ) : null}
             </button>
           </Link>
         ))}
