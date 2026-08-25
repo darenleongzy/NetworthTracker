@@ -6,10 +6,9 @@ import {
   calculateCashTotal,
   calculateInvestmentValue,
 } from "@/lib/calculations";
-import { getUserPreferences, getFireSettings } from "@/lib/actions";
 import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
 import { FireCalculator } from "@/components/fire-calculator";
-import type { Account, CashHolding, StockHolding, Expense } from "@/lib/types";
+import { DEFAULT_FIRE_SETTINGS, type Account, type CashHolding, type StockHolding, type Expense } from "@/lib/types";
 
 export default async function FirePage() {
   const supabase = await createClient();
@@ -20,7 +19,7 @@ export default async function FirePage() {
   const threeMonthsAgoStr = threeMonthsAgo.toISOString().split("T")[0];
 
   // Fetch all user data in parallel
-  const [accountsRes, expensesRes, preferences, fireSettings] = await Promise.all([
+  const [accountsRes, expensesRes, preferencesRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
@@ -30,8 +29,12 @@ export default async function FirePage() {
       .select("*")
       .gte("expense_date", threeMonthsAgoStr)
       .order("expense_date", { ascending: false }),
-    getUserPreferences(),
-    getFireSettings(),
+    supabase
+      .from("user_preferences")
+      .select(
+        "base_currency, fire_current_age, fire_swr, fire_growth_rate, fire_inflation_rate, fire_include_cpf_srs, fire_expense_mode, fire_manual_expenses, fire_savings_mode, fire_manual_savings"
+      )
+      .maybeSingle(),
   ]);
 
   const accounts = (accountsRes.data ?? []) as (Account & {
@@ -39,7 +42,11 @@ export default async function FirePage() {
     stock_holdings: StockHolding[];
   })[];
   const expenses = (expensesRes.data ?? []) as Expense[];
-  const baseCurrency = preferences.base_currency;
+  const baseCurrency = preferencesRes.data?.base_currency ?? "USD";
+  const fireSettings = {
+    ...DEFAULT_FIRE_SETTINGS,
+    ...preferencesRes.data,
+  };
 
   // Collect all stock tickers and fetch prices
   const allStockHoldings = accounts.flatMap((a) => a.stock_holdings);

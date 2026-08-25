@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { NavProgress } from "@/components/nav-progress";
 
 export const metadata: Metadata = {
@@ -11,31 +11,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  // Check if user is admin
-  const { data: adminRecord } = await supabase
-    .from("admin_users")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
-  const isAdmin = !!adminRecord;
-
   return (
     <div className="flex min-h-screen bg-background">
       <NavProgress />
-      <DashboardNav userEmail={user.email ?? ""} isAdmin={isAdmin} />
+      <Suspense fallback={<DashboardNav userEmail="" />}>
+        <DashboardNavigation />
+      </Suspense>
       <main className="app-workspace flex-1 overflow-auto p-4 pt-[4.5rem] sm:p-5 sm:pt-6 lg:p-8 lg:pt-8">
         {children}
       </main>

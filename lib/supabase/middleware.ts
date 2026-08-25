@@ -25,13 +25,16 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims verifies the signed access token without a user-record lookup.
+  // With Supabase's default asymmetric keys this is local after the JWKS cache
+  // is warm, which keeps the proxy off the dashboard's critical render path.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  const isAuthenticated = Boolean(claims?.sub);
 
   // Redirect unauthenticated users away from dashboard
   if (
-    !user &&
+    !isAuthenticated &&
     request.nextUrl.pathname.startsWith("/dashboard")
   ) {
     const url = request.nextUrl.clone();
@@ -41,7 +44,7 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages
   if (
-    user &&
+    isAuthenticated &&
     (request.nextUrl.pathname === "/login" ||
       request.nextUrl.pathname === "/signup" ||
       request.nextUrl.pathname === "/")

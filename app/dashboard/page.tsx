@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStockPrices } from "@/lib/stock-api";
 import {
@@ -8,7 +9,7 @@ import {
   calculateInvestmentCost,
   getCurrentMonthExpenses,
 } from "@/lib/calculations";
-import { getUserPreferences, saveAccountSnapshots, saveSnapshot } from "@/lib/actions";
+import { saveAccountSnapshots, saveSnapshot } from "@/lib/actions";
 import { getExchangeRates, convertToBaseCurrency } from "@/lib/exchange-rates";
 import { SummaryCards } from "@/components/summary-cards";
 import { BaseCurrencySelector } from "@/components/base-currency-selector";
@@ -35,7 +36,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
 
   // Fetch all user data in parallel
-  const [accountsRes, snapshotsRes, expensesRes, preferences, accountSnapshotsRes] = await Promise.all([
+  const [accountsRes, snapshotsRes, expensesRes, preferencesRes, accountSnapshotsRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
@@ -49,7 +50,7 @@ export default async function DashboardPage() {
       .from("expenses")
       .select("*")
       .order("expense_date", { ascending: false }),
-    getUserPreferences(),
+    supabase.from("user_preferences").select("base_currency").maybeSingle(),
     supabase
       .from("account_value_snapshots")
       .select("*")
@@ -63,7 +64,7 @@ export default async function DashboardPage() {
   const snapshotsRaw = snapshotsRes.data ?? [];
   const allExpenses = (expensesRes.data ?? []) as Expense[];
   const currentMonthExpenses = getCurrentMonthExpenses(allExpenses);
-  const baseCurrency = preferences.base_currency;
+  const baseCurrency = preferencesRes.data?.base_currency ?? "USD";
 
   // Fetch exchange rates for base currency
   // Collect all stock tickers and fetch prices
@@ -132,24 +133,37 @@ export default async function DashboardPage() {
     ...currentAccountSnapshots,
   ];
 
-  if (accounts.length > 0) {
-    const snapshotStartedAt = Date.now();
-    try {
-      await Promise.all([
-        saveSnapshot(totalNetWorth, cashTotal, investmentValue, baseCurrency),
-        saveAccountSnapshots(accounts, baseCurrency, exchangeRates, prices),
-      ]);
-    } catch (error) {
-      console.error(
-        JSON.stringify({
-          level: "error",
-          message: "dashboard_snapshot_save_failed",
-          error: error instanceof Error ? error.message : String(error),
-        })
-      );
-    } finally {
-      logSlowOperation("dashboard_snapshot_save", snapshotStartedAt);
-    }
+  const hasTodaySnapshot = snapshotsRaw.some((snapshot) => snapshot.snapshot_date === today);
+  const savedTodayAccountIds = new Set(
+    accountTypeSnapshotRows
+      .filter((snapshot) => snapshot.snapshot_date === today)
+      .map((snapshot) => snapshot.account_id)
+  );
+  const needsAccountSnapshots = accounts.some(
+    (account) => !savedTodayAccountIds.has(account.id)
+  );
+
+  if (accounts.length > 0 && (!hasTodaySnapshot || needsAccountSnapshots)) {
+    // Snapshot writes are useful history, but should never delay the page shell.
+    after(async () => {
+      const snapshotStartedAt = Date.now();
+      try {
+        await Promise.all([
+          saveSnapshot(totalNetWorth, cashTotal, investmentValue, baseCurrency),
+          saveAccountSnapshots(accounts, baseCurrency, exchangeRates, prices),
+        ]);
+      } catch (error) {
+        console.error(
+          JSON.stringify({
+            level: "error",
+            message: "dashboard_snapshot_save_failed",
+            error: error instanceof Error ? error.message : String(error),
+          })
+        );
+      } finally {
+        logSlowOperation("dashboard_snapshot_save", snapshotStartedAt);
+      }
+    });
   }
 
   // Convert historical snapshots to current base currency
@@ -187,7 +201,6 @@ export default async function DashboardPage() {
   });
 
   // If today's snapshot doesn't exist in the fetched data, add it
-  const hasTodaySnapshot = snapshotsRaw.some((s) => s.snapshot_date === today);
   if (!hasTodaySnapshot && accounts.length > 0) {
     snapshots.push({
       id: "current",
