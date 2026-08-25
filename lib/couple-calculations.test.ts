@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getCoupleGoalProgress } from "@/lib/couple-calculations";
+import {
+  getCoupleAssetTotal,
+  getCoupleContributionPercentages,
+  getCoupleGoalProgress,
+} from "@/lib/couple-calculations";
 
 describe("getCoupleGoalProgress", () => {
   const breakdown = { cash: 100_000, investments: 250_000, cpf: 90_000, srs: 10_000 };
@@ -26,5 +30,19 @@ describe("getCoupleGoalProgress", () => {
       progress: 0,
       remaining: 0,
     });
+  });
+});
+
+describe("couple summary helpers", () => {
+  const breakdown = { cash: 100_000, investments: 250_000, cpf: 90_000, srs: 10_000 };
+
+  it("reports both the full and retirement-excluded totals", () => {
+    expect(getCoupleAssetTotal(breakdown)).toBe(450_000);
+    expect(getCoupleAssetTotal(breakdown, false)).toBe(350_000);
+  });
+
+  it("calculates contribution percentages without failing on empty balances", () => {
+    expect(getCoupleContributionPercentages(300_000, 100_000)).toEqual({ first: 75, second: 25 });
+    expect(getCoupleContributionPercentages(0, 0)).toEqual({ first: 0, second: 0 });
   });
 });

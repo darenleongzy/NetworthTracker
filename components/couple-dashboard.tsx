@@ -24,7 +24,11 @@ import {
   updateCoupleGoal,
 } from "@/lib/couple-actions";
 import { formatCurrency } from "@/lib/calculations";
-import { getCoupleGoalProgress } from "@/lib/couple-calculations";
+import {
+  getCoupleAssetTotal,
+  getCoupleContributionPercentages,
+  getCoupleGoalProgress,
+} from "@/lib/couple-calculations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +41,8 @@ type CoupleDashboardProps = {
   currentUserId: string;
   baseCurrency: string;
   breakdown: CoupleAssetBreakdown;
+  ownBreakdown: CoupleAssetBreakdown;
+  partnerBreakdown: CoupleAssetBreakdown;
 };
 
 export function CoupleDashboard({
@@ -44,6 +50,8 @@ export function CoupleDashboard({
   currentUserId,
   baseCurrency,
   breakdown,
+  ownBreakdown,
+  partnerBreakdown,
 }: CoupleDashboardProps) {
   if (!connection) return <InvitePartner />;
 
@@ -63,6 +71,8 @@ export function CoupleDashboard({
       connection={connection}
       baseCurrency={baseCurrency}
       breakdown={breakdown}
+      ownBreakdown={ownBreakdown}
+      partnerBreakdown={partnerBreakdown}
       partnerEmail={invitedByCurrentUser ? connection.invitee_email : connection.inviter_email}
     />
   );
@@ -208,11 +218,15 @@ function ConnectedCoupleDashboard({
   connection,
   baseCurrency,
   breakdown,
+  ownBreakdown,
+  partnerBreakdown,
   partnerEmail,
 }: {
   connection: CoupleConnection;
   baseCurrency: string;
   breakdown: CoupleAssetBreakdown;
+  ownBreakdown: CoupleAssetBreakdown;
+  partnerBreakdown: CoupleAssetBreakdown;
   partnerEmail: string;
 }) {
   const router = useRouter();
@@ -221,12 +235,16 @@ function ConnectedCoupleDashboard({
   const [savingGoal, setSavingGoal] = useState(false);
   const goalAmount = Number(goalInput) || 0;
   const { total, progress, remaining } = getCoupleGoalProgress(breakdown, includeCpf, goalAmount);
-  const allAssets = breakdown.cash + breakdown.investments + breakdown.cpf + breakdown.srs;
+  const allAssets = getCoupleAssetTotal(breakdown);
+  const totalExcludingCpf = getCoupleAssetTotal(breakdown, false);
+  const ownTotal = getCoupleAssetTotal(ownBreakdown);
+  const partnerTotal = getCoupleAssetTotal(partnerBreakdown);
+  const contributionPercentages = getCoupleContributionPercentages(ownTotal, partnerTotal);
   const segments = [
-    { label: "Cash", value: breakdown.cash, icon: WalletCards, color: "bg-emerald-400", tint: "bg-emerald-400/15", text: "text-emerald-300" },
-    { label: "Investments", value: breakdown.investments, icon: TrendingUp, color: "bg-sky-400", tint: "bg-sky-400/15", text: "text-sky-300" },
-    { label: "CPF", value: breakdown.cpf, icon: Landmark, color: "bg-amber-400", tint: "bg-amber-400/15", text: "text-amber-300" },
-    { label: "SRS", value: breakdown.srs, icon: ShieldCheck, color: "bg-violet-400", tint: "bg-violet-400/15", text: "text-violet-300" },
+    { label: "Cash", value: breakdown.cash, ownValue: ownBreakdown.cash, partnerValue: partnerBreakdown.cash, icon: WalletCards, color: "bg-emerald-400", tint: "bg-emerald-400/15", text: "text-emerald-300" },
+    { label: "Investments", value: breakdown.investments, ownValue: ownBreakdown.investments, partnerValue: partnerBreakdown.investments, icon: TrendingUp, color: "bg-sky-400", tint: "bg-sky-400/15", text: "text-sky-300" },
+    { label: "CPF", value: breakdown.cpf, ownValue: ownBreakdown.cpf, partnerValue: partnerBreakdown.cpf, icon: Landmark, color: "bg-amber-400", tint: "bg-amber-400/15", text: "text-amber-300" },
+    { label: "SRS", value: breakdown.srs, ownValue: ownBreakdown.srs, partnerValue: partnerBreakdown.srs, icon: ShieldCheck, color: "bg-violet-400", tint: "bg-violet-400/15", text: "text-violet-300" },
   ];
 
   async function saveGoal() {
@@ -247,30 +265,47 @@ function ConnectedCoupleDashboard({
       <section className="relative overflow-hidden rounded-[2rem] border border-primary/20 bg-[linear-gradient(120deg,#15334c,#197470_58%,#1e4b70)] p-6 text-white shadow-[0_30px_80px_-46px_rgba(20,184,166,0.75)] sm:p-8">
         <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-emerald-300/20 blur-3xl" />
         <div className="absolute -bottom-24 left-1/3 h-52 w-52 rounded-full border border-white/10" />
-        <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative space-y-6">
           <div>
             <div className="mb-4 flex items-center gap-2 text-emerald-100"><Heart className="h-5 w-5 fill-current" /><span className="text-xs font-bold uppercase tracking-[0.2em]">Couple Mode</span></div>
             <p className="text-sm text-white/65">Combined assets with {partnerEmail}</p>
-            <p className="mt-2 text-[clamp(2.5rem,7vw,4.75rem)] font-semibold leading-none tracking-[-0.06em]">{formatCurrency(allAssets, baseCurrency)}</p>
-            <p className="mt-3 text-sm text-white/70">A shared view, with individual control over every account.</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 sm:gap-8">
+              <div><p className="text-xs font-medium uppercase tracking-[0.14em] text-white/55">Total assets</p><p className="mt-1 text-[clamp(2.25rem,6vw,4.5rem)] font-semibold leading-none tracking-[-0.06em]">{formatCurrency(allAssets, baseCurrency)}</p></div>
+              <div><p className="text-xs font-medium uppercase tracking-[0.14em] text-white/55">Excluding CPF / SRS</p><p className="mt-1 text-[clamp(1.75rem,4.5vw,3.25rem)] font-semibold leading-none tracking-[-0.05em] text-white/90">{formatCurrency(totalExcludingCpf, baseCurrency)}</p></div>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/15 bg-white/8 p-4 backdrop-blur-sm sm:min-w-72">
-            <div><p className="text-xs text-white/60">Goal view</p><p className="mt-1 text-sm font-semibold">{includeCpf ? "Including CPF / SRS" : "Excluding CPF / SRS"}</p></div>
-            <div><p className="text-xs text-white/60">Connected</p><p className="mt-1 text-sm font-semibold">Planning together</p></div>
-          </div>
+          {goalAmount > 0 && <div className="rounded-2xl border border-white/15 bg-slate-950/15 p-4 backdrop-blur-sm">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"><p className="text-sm font-semibold">Shared goal <span className="font-normal text-white/60">{includeCpf ? "including CPF / SRS" : "excluding CPF / SRS"}</span></p><p className="text-sm font-semibold">{progress.toFixed(1)}%</p></div>
+            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[linear-gradient(90deg,#a7f3d0,#67e8f9)] transition-[width] duration-500" style={{ width: `${progress}%` }} /></div>
+            <p className="mt-2 text-xs text-white/70">{formatCurrency(total, baseCurrency)} of {formatCurrency(goalAmount, baseCurrency)} · {formatCurrency(remaining, baseCurrency)} to go</p>
+          </div>}
+          <p className="text-sm text-white/70">A shared view, with individual control over every account.</p>
         </div>
       </section>
 
+      <Card className="border-border/80 bg-card shadow-sm">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-base font-semibold">Contribution split</p><p className="text-sm text-muted-foreground">How each partner contributes to your combined assets.</p></div><p className="text-sm font-medium text-muted-foreground">{Math.round(contributionPercentages.first)}% / {Math.round(contributionPercentages.second)}%</p></div>
+          <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-primary transition-[width] duration-500" style={{ width: `${contributionPercentages.first}%` }} /><div className="h-full bg-teal-400 transition-[width] duration-500" style={{ width: `${contributionPercentages.second}%` }} /></div>
+          <div className="mt-3 grid grid-cols-2 gap-4 text-sm"><div><p className="text-muted-foreground">You</p><p className="mt-1 font-semibold">{formatCurrency(ownTotal, baseCurrency)}</p></div><div className="text-right"><p className="truncate text-muted-foreground" title={partnerEmail}>{partnerEmail}</p><p className="mt-1 font-semibold">{formatCurrency(partnerTotal, baseCurrency)}</p></div></div>
+        </CardContent>
+      </Card>
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {segments.map(({ label, value, icon: Icon, tint, text }) => (
+        {segments.map(({ label, value, ownValue, partnerValue, icon: Icon, tint, text }) => {
+          const ownerPercentages = getCoupleContributionPercentages(ownValue, partnerValue);
+          return (
           <Card key={label} className="border-border/70 bg-card shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center justify-between"><span className={`rounded-xl ${tint} p-2 ${text}`}><Icon className="h-4 w-4" /></span><span className="text-xs text-muted-foreground">{allAssets > 0 ? Math.round((value / allAssets) * 100) : 0}%</span></div>
-              <p className="mt-5 text-sm text-muted-foreground">{label}</p>
+              <p className="mt-4 text-sm text-muted-foreground">{label}</p>
               <p className="mt-1 text-xl font-semibold tracking-tight">{formatCurrency(value, baseCurrency)}</p>
+              <div className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-primary" style={{ width: `${ownerPercentages.first}%` }} /><div className="h-full bg-teal-400" style={{ width: `${ownerPercentages.second}%` }} /></div>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs"><span className="text-muted-foreground">You <b className="font-medium text-foreground">{formatCurrency(ownValue, baseCurrency)}</b></span><span className="truncate text-right text-muted-foreground" title={partnerEmail}>{partnerEmail} <b className="font-medium text-foreground">{formatCurrency(partnerValue, baseCurrency)}</b></span></div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">

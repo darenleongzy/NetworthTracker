@@ -44,3 +44,24 @@ export function getCoupleGoalProgress(
 
   return { total, progress, remaining: Math.max(goalAmount - total, 0) };
 }
+
+export function getCoupleAssetTotal(breakdown: CoupleAssetBreakdown, includeCpf = true) {
+  return (
+    breakdown.cash +
+    breakdown.investments +
+    (includeCpf ? breakdown.cpf + breakdown.srs : 0)
+  );
+}
+
+export function getCoupleContributionPercentages(
+  firstContribution: number,
+  secondContribution: number
+) {
+  const total = firstContribution + secondContribution;
+  if (total <= 0) return { first: 0, second: 0 };
+
+  return {
+    first: (firstContribution / total) * 100,
+    second: (secondContribution / total) * 100,
+  };
+}

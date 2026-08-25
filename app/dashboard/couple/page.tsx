@@ -5,7 +5,9 @@ import { getExchangeRates } from "@/lib/exchange-rates";
 import { getStockPrices } from "@/lib/stock-api";
 import { calculateCoupleAssetBreakdown } from "@/lib/couple-calculations";
 import { CoupleDashboard } from "@/components/couple-dashboard";
-import type { AccountWithHoldings, CoupleConnection } from "@/lib/types";
+import type { AccountWithHoldings, CoupleAssetBreakdown, CoupleConnection } from "@/lib/types";
+
+const emptyBreakdown: CoupleAssetBreakdown = { cash: 0, investments: 0, cpf: 0, srs: 0 };
 
 export default async function CouplePage() {
   const supabase = await createClient();
@@ -27,7 +29,9 @@ export default async function CouplePage() {
 
   const typedConnection = (connection ?? null) as CoupleConnection | null;
   const baseCurrency = preferences?.base_currency ?? "USD";
-  let breakdown = { cash: 0, investments: 0, cpf: 0, srs: 0 };
+  let breakdown = emptyBreakdown;
+  let ownBreakdown = emptyBreakdown;
+  let partnerBreakdown = emptyBreakdown;
 
   if (typedConnection?.status === "connected") {
     const { data: accounts } = await supabase
@@ -41,6 +45,18 @@ export default async function CouplePage() {
       tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
     ]);
     breakdown = calculateCoupleAssetBreakdown(typedAccounts, baseCurrency, exchangeRates, stockPrices);
+    ownBreakdown = calculateCoupleAssetBreakdown(
+      typedAccounts.filter((account) => account.user_id === userId),
+      baseCurrency,
+      exchangeRates,
+      stockPrices
+    );
+    partnerBreakdown = calculateCoupleAssetBreakdown(
+      typedAccounts.filter((account) => account.user_id !== userId),
+      baseCurrency,
+      exchangeRates,
+      stockPrices
+    );
   }
 
   return (
@@ -49,6 +65,8 @@ export default async function CouplePage() {
       currentUserId={userId}
       baseCurrency={baseCurrency}
       breakdown={breakdown}
+      ownBreakdown={ownBreakdown}
+      partnerBreakdown={partnerBreakdown}
     />
   );
 }
