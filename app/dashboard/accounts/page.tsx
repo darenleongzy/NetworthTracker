@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/server";
-import { getUserPreferences } from "@/lib/actions";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { getStockPrices } from "@/lib/stock-api";
 import { AccountList } from "@/components/account-list";
@@ -11,16 +10,16 @@ import type { AccountWithHoldings } from "@/lib/types";
 export default async function AccountsPage() {
   const supabase = await createClient();
 
-  const [{ data: accounts }, preferences] = await Promise.all([
+  const [{ data: accounts }, preferencesRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
       .order("created_at", { ascending: true }),
-    getUserPreferences(),
+    supabase.from("user_preferences").select("base_currency").maybeSingle(),
   ]);
 
   const typedAccounts = (accounts as AccountWithHoldings[]) ?? [];
-  const baseCurrency = preferences.base_currency;
+  const baseCurrency = preferencesRes.data?.base_currency ?? "USD";
   // Fetch stock prices for all investment accounts
   const allStockHoldings = typedAccounts.flatMap((a) => a.stock_holdings);
   const tickers = allStockHoldings.map((h) => h.ticker);

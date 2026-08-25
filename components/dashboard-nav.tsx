@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useEffectEvent, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -64,6 +64,7 @@ function NavContent({
   onNavigate,
   theme,
   onThemeChange,
+  onWarmRoute,
   isDarkSidebar = false,
   isAdmin = false,
 }: {
@@ -73,6 +74,7 @@ function NavContent({
   onNavigate?: () => void;
   theme: Theme;
   onThemeChange: (theme: Theme) => void;
+  onWarmRoute: (href: string) => void;
   isDarkSidebar?: boolean;
   isAdmin?: boolean;
 }) {
@@ -87,7 +89,14 @@ function NavContent({
       <div className={cn("h-px shrink-0", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
       <nav className="flex-1 overflow-y-auto space-y-1 px-2 py-4">
         {allNavItems.map((item) => (
-          <Link key={item.href} href={item.href} onClick={onNavigate}>
+          <Link
+            key={item.href}
+            href={item.href}
+            prefetch
+            onMouseEnter={() => onWarmRoute(item.href)}
+            onFocus={() => onWarmRoute(item.href)}
+            onClick={onNavigate}
+          >
             <button
               className={cn(
                 "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -228,6 +237,30 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
 
+  const warmVisibleRoutes = useEffectEvent(() => {
+    const routes = isAdmin ? [...navItems, adminNavItem] : navItems;
+    routes.forEach((item) => {
+      if (item.href !== pathname) router.prefetch(item.href);
+    });
+  });
+
+  function warmRoute(href: string) {
+    if (href !== pathname) {
+      router.prefetch(href);
+    }
+  }
+
+  useEffect(() => {
+    const idleCallback = window.requestIdleCallback?.(warmVisibleRoutes, { timeout: 1_500 });
+    const timeoutId =
+      idleCallback === undefined ? window.setTimeout(warmVisibleRoutes, 350) : undefined;
+
+    return () => {
+      if (idleCallback !== undefined) window.cancelIdleCallback(idleCallback);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, []);
+
   function handleThemeChange(nextTheme: Theme) {
     document.documentElement.dataset.theme = nextTheme;
     document.documentElement.style.colorScheme = nextTheme;
@@ -262,6 +295,7 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
               onNavigate={() => setMobileOpen(false)}
               theme={theme}
               onThemeChange={handleThemeChange}
+              onWarmRoute={warmRoute}
               isAdmin={isAdmin}
             />
           </SheetContent>
@@ -281,6 +315,7 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
           onSignOut={handleSignOut}
           theme={theme}
           onThemeChange={handleThemeChange}
+          onWarmRoute={warmRoute}
           isDarkSidebar
           isAdmin={isAdmin}
         />
