@@ -4,7 +4,7 @@ export function OrganizationSchema() {
     "@type": "Organization",
     name: "Track My Worth",
     url: "https://trackmyworth.xyz",
-    logo: "https://trackmyworth.xyz/og-image.png",
+    logo: "https://trackmyworth.xyz/track-my-worth-icon.png",
     description:
       "Track your net worth, savings, and investment portfolio in one simple dashboard.",
   };

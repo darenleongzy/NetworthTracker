@@ -17,6 +17,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${siteUrl}/singapore-net-worth-tracker`,
+      lastModified: new Date("2026-08-26"),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/cpf-projection-calculator`,
+      lastModified: new Date("2026-08-26"),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/fire-calculator-singapore`,
+      lastModified: new Date("2026-08-26"),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: `${siteUrl}/privacy`,
       lastModified: new Date("2026-08-24"),
       changeFrequency: "yearly",

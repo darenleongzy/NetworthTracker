@@ -9,19 +9,44 @@ import {
 } from "@/components/structured-data";
 
 export const metadata: Metadata = {
-  title: "Track My Worth - Monitor Your Wealth & FIRE Goals",
+  title: "Singapore Net Worth Tracker | Track My Worth",
   description:
-    "Track your net worth, savings, and investments in one dashboard. See your portfolio value with live stock prices, monitor cash accounts, and watch your wealth grow over time.",
+    "Track your net worth in Singapore across CPF, SRS, cash and investments. Monitor your portfolio, expenses and FIRE progress in one private dashboard.",
   alternates: {
     canonical: "/",
   },
 };
 
 export default function LandingPage() {
+  const faqs = [
+    {
+      question: "Can I track CPF and SRS alongside investments?",
+      answer: "Yes. Track My Worth brings CPF, SRS, cash accounts and investment holdings into one net worth view while keeping the account types distinct.",
+    },
+    {
+      question: "Does Track My Worth require my bank login?",
+      answer: "No. You add and maintain your balances in your protected account, so you do not need to provide online-banking credentials.",
+    },
+    {
+      question: "Can I use it to plan for FIRE in Singapore?",
+      answer: "Yes. You can estimate a financial independence target and timeline using spending, savings and investment assumptions, then review it alongside CPF and your wider net worth.",
+    },
+  ];
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <OrganizationSchema />
       <SoftwareApplicationSchema />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <Link href="/" className="flex min-w-0 items-center gap-2 font-bold">
@@ -45,11 +70,11 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="flex flex-col items-center justify-center px-5 py-16 text-center sm:px-6 sm:py-24">
           <h1 className="max-w-4xl text-[clamp(2.35rem,10vw,4rem)] font-bold leading-[1.05] tracking-tight">
-            Track Your <span className="text-primary">Net Worth</span>
+            Your Singapore <span className="text-primary">Net Worth</span>, in One Place
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-            Monitor your savings, investments, and overall financial health in
-            one simple dashboard. See how your wealth grows over time.
+            Track cash, investments, CPF, SRS and expenses in one private
+            dashboard—then see how they shape your FIRE journey over time.
           </p>
           <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:gap-4">
             <Link href="/signup">
@@ -133,6 +158,46 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <section className="border-t bg-muted/35 px-5 py-16 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-5xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+              Built for financial planning in Singapore
+            </p>
+            <h2 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
+              Understand the accounts that shape your future.
+            </h2>
+            <div className="mt-10 grid gap-8 md:grid-cols-3">
+              <Link href="/singapore-net-worth-tracker" className="group border-t border-border pt-5">
+                <h3 className="text-lg font-semibold group-hover:text-primary">Singapore net worth tracking</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Bring CPF, SRS, cash, investments and liabilities into one clear picture.</p>
+              </Link>
+              <Link href="/cpf-projection-calculator" className="group border-t border-border pt-5">
+                <h3 className="text-lg font-semibold group-hover:text-primary">CPF projection calculator</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Explore OA, SA and MA growth with salary, interest and housing assumptions.</p>
+              </Link>
+              <Link href="/fire-calculator-singapore" className="group border-t border-border pt-5">
+                <h3 className="text-lg font-semibold group-hover:text-primary">FIRE planning in Singapore</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Estimate your target and timeline from real spending and savings assumptions.</p>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-5 py-16 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-4xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Frequently asked questions</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">A clearer way to start tracking</h2>
+            <div className="mt-8 divide-y divide-border border-y border-border">
+              {faqs.map((faq) => (
+                <details key={faq.question} className="py-5">
+                  <summary className="cursor-pointer list-none text-lg font-semibold">{faq.question}</summary>
+                  <p className="mt-3 max-w-3xl leading-7 text-muted-foreground">{faq.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="border-t px-6 py-6 text-center text-sm text-muted-foreground">
@@ -143,6 +208,9 @@ export default function LandingPage() {
           </Link>
           <Link href="/terms" className="hover:text-foreground transition-colors">
             Terms of Service
+          </Link>
+          <Link href="/features" className="hover:text-foreground transition-colors">
+            Features
           </Link>
           <Link href="/delete-account" className="hover:text-foreground transition-colors">
             Delete Account

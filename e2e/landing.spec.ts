@@ -6,12 +6,12 @@ test.describe("Landing Page", () => {
 
     // Check main heading
     await expect(
-      page.getByRole("heading", { name: /Track Your Net Worth/i })
+      page.getByRole("heading", { name: /Your Singapore Net Worth/i })
     ).toBeVisible();
 
     // Check CTA buttons
     await expect(
-      page.getByRole("link", { name: /Request Access/i }).first()
+      page.getByRole("link", { name: /Sign up/i }).first()
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Sign In/i }).first()
@@ -63,7 +63,7 @@ test.describe("Landing Page", () => {
 
   test("navigates to signup page", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /Request Access/i }).first().click();
+    await page.getByRole("link", { name: /Sign up/i }).first().click();
     await expect(page).toHaveURL("/signup");
   });
 
@@ -94,6 +94,9 @@ test.describe("SEO Files", () => {
     expect(content).toContain("urlset");
     expect(content).toContain("trackmyworth.xyz");
     expect(content).toContain("https://trackmyworth.xyz/features");
+    expect(content).toContain("https://trackmyworth.xyz/singapore-net-worth-tracker");
+    expect(content).toContain("https://trackmyworth.xyz/cpf-projection-calculator");
+    expect(content).toContain("https://trackmyworth.xyz/fire-calculator-singapore");
     expect(content).toContain("https://trackmyworth.xyz/privacy");
     expect(content).toContain("https://trackmyworth.xyz/terms");
     expect(content).toContain("https://trackmyworth.xyz/delete-account");
@@ -120,4 +123,26 @@ test.describe("Feature Discovery Page", () => {
       "https://trackmyworth.xyz/features"
     );
   });
+});
+
+test.describe("SEO Landing Pages", () => {
+  const pages = [
+    ["/singapore-net-worth-tracker", /Your complete wealth picture/i],
+    ["/cpf-projection-calculator", /See how your CPF balances could grow/i],
+    ["/fire-calculator-singapore", /path to financial independence/i],
+  ] as const;
+
+  for (const [path, heading] of pages) {
+    test(`${path} is indexable and includes FAQ schema`, async ({ page }) => {
+      const response = await page.goto(path);
+      expect(response?.status()).toBe(200);
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /index, follow/);
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://trackmyworth.xyz${path}`);
+      const jsonLd = await page.locator('script[type="application/ld+json"]').evaluateAll(
+        (scripts) => scripts.map((script) => script.textContent).join("\n")
+      );
+      expect(jsonLd).toContain("FAQPage");
+    });
+  }
 });
