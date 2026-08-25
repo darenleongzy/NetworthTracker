@@ -25,7 +25,7 @@ export function AppLoadingScreen() {
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">
           Track My Worth
         </p>
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight">Preparing your dashboard</h1>
+        <p className="mt-3 text-2xl font-semibold tracking-tight">Preparing your dashboard</p>
         <p className="mt-2 text-sm leading-6 text-slate-500">
           Syncing your balances, activity, and latest market values.
         </p>
