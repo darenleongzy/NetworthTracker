@@ -251,7 +251,7 @@ export default async function DashboardPage() {
       <DashboardAd />
 
       {snapshots.length > 1 && (
-        <GainsChart snapshots={snapshots} />
+        <GainsChart snapshots={snapshots} baseCurrency={baseCurrency} />
       )}
 
       <AccountTypeMonthlyChart
