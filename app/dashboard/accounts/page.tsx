@@ -29,13 +29,12 @@ export default async function AccountsPage() {
   const stockPrices = tickers.length > 0 ? await getStockPrices(tickers) : {};
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div className="app-page-header">
         <div>
-          <h1 className="text-2xl font-bold">Accounts</h1>
-          <p className="text-muted-foreground">
-            Manage your cash and investment accounts
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Portfolio</p>
+          <h1 className="app-page-title mt-2">Accounts</h1>
+          <p className="app-page-subtitle">Organize the places your money lives.</p>
         </div>
         <CreateAccountForm />
       </div>

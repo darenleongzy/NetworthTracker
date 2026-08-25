@@ -34,12 +34,9 @@ type AccountCategoryKey = "brokerage" | "cash" | "retirement";
 type AccountCategory = {
   key: AccountCategoryKey;
   title: string;
-  description: string;
   icon: typeof ArrowUpRight;
   types: AccountType[];
   emptyMessage: string;
-  tabTone: string;
-  cardTone: string;
   badgeTone: string;
 };
 
@@ -47,40 +44,25 @@ const ACCOUNT_CATEGORIES: AccountCategory[] = [
   {
     key: "brokerage",
     title: "Brokerage Accounts",
-    description: "Track investment accounts and market-linked holdings.",
     icon: ArrowUpRight,
     types: ["investment"],
     emptyMessage: "No brokerage accounts yet.",
-    tabTone:
-      "data-[state=active]:border-sky-300/70 data-[state=active]:bg-sky-50/90 data-[state=active]:text-sky-950",
-    cardTone:
-      "border-sky-200/70 bg-[linear-gradient(160deg,rgba(248,250,252,0.98),rgba(239,246,255,0.96),rgba(224,242,254,0.82))]",
     badgeTone: "bg-sky-100 text-sky-900",
   },
   {
     key: "cash",
     title: "Cash Accounts",
-    description: "Monitor liquid funds across day-to-day cash holdings.",
     icon: Wallet,
     types: ["cash"],
     emptyMessage: "No cash accounts yet.",
-    tabTone:
-      "data-[state=active]:border-slate-300/70 data-[state=active]:bg-slate-100/90 data-[state=active]:text-slate-950",
-    cardTone:
-      "border-slate-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96),rgba(241,245,249,0.86))]",
     badgeTone: "bg-slate-100 text-slate-900",
   },
   {
     key: "retirement",
     title: "CPF / SRS Accounts",
-    description: "Keep retirement-focused balances and protected savings in view.",
     icon: ShieldCheck,
     types: ["cpf", "srs"],
     emptyMessage: "No CPF or SRS accounts yet.",
-    tabTone:
-      "data-[state=active]:border-emerald-300/70 data-[state=active]:bg-emerald-50/90 data-[state=active]:text-emerald-950",
-    cardTone:
-      "border-emerald-200/70 bg-[linear-gradient(160deg,rgba(255,251,235,0.88),rgba(236,253,245,0.98),rgba(219,234,254,0.75))]",
     badgeTone: "bg-emerald-100 text-emerald-900",
   },
 ];
@@ -200,7 +182,7 @@ export function AccountList({
 
   return (
     <div className="space-y-5">
-      <Card className="overflow-hidden border-slate-200/70 bg-[linear-gradient(125deg,rgba(15,23,42,0.98)_0%,rgba(30,41,59,0.96)_38%,rgba(44,98,120,0.9)_72%,rgba(77,163,176,0.88)_100%)] text-white shadow-[0_26px_70px_-40px_rgba(15,23,42,0.65)]">
+      <Card className="accounts-overview text-white">
         <CardHeader className="relative">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_18%,rgba(125,211,252,0.14),transparent_26%),radial-gradient(circle_at_82%_22%,rgba(94,234,212,0.1),transparent_30%),radial-gradient(circle_at_92%_100%,rgba(45,212,191,0.14),transparent_34%)]" />
           <div className="relative flex flex-col gap-6">
@@ -241,7 +223,7 @@ export function AccountList({
               <TabsTrigger
                 key={category.key}
                 value={category.key}
-                className={`min-w-0 rounded-[1.15rem] border border-slate-200/80 bg-white/92 px-2 py-3 whitespace-normal shadow-[0_12px_28px_-24px_rgba(15,23,42,0.32)] backdrop-blur-sm transition-[box-shadow,border-color,background-color] hover:shadow-[0_16px_34px_-28px_rgba(15,23,42,0.36)] data-[state=active]:shadow-[0_18px_38px_-30px_rgba(14,116,144,0.3)] sm:rounded-[1.35rem] sm:px-3 sm:py-3 md:px-5 md:py-4 ${category.tabTone}`}
+                className="account-category-tab min-w-0 whitespace-normal px-2 py-3 transition-all hover:-translate-y-0.5 sm:px-3 sm:py-3 md:px-5 md:py-4"
               >
                 <div className="flex w-full flex-col items-center gap-2 text-center sm:items-start sm:text-left">
                   <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-black/5 sm:p-2.5">
@@ -270,7 +252,7 @@ export function AccountList({
           <TabsContent
             key={category.key}
             value={category.key}
-            className="mt-4 rounded-[1.75rem] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.78),rgba(255,255,255,0.96))] p-4 shadow-[0_18px_44px_-40px_rgba(15,23,42,0.2)] outline-none sm:mt-5 sm:p-5 lg:mt-6 lg:p-6"
+            className="account-list-surface mt-4 p-4 outline-none sm:mt-5 sm:p-5 lg:mt-6 lg:p-6"
           >
             {items.length === 0 ? (
               <Card className="border-dashed border-slate-200/80 bg-white/80 shadow-sm">
@@ -302,19 +284,19 @@ export function AccountList({
                   return (
                     <Card
                       key={account.id}
-                      className={`${category.cardTone} border shadow-[0_18px_40px_-34px_rgba(15,23,42,0.35)] transition-transform hover:-translate-y-0.5`}
+                      className="border-border/80 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <CardHeader className="space-y-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-start gap-3">
-                            <div className="rounded-2xl bg-white/85 p-3 shadow-sm">
-                              <Icon className="h-5 w-5 text-slate-900" />
+                            <div className="rounded-2xl bg-secondary p-3 shadow-sm">
+                              <Icon className="h-5 w-5 text-foreground" />
                             </div>
                             <div className="min-w-0">
-                              <CardTitle className="truncate pr-2 text-lg text-slate-950">
+                              <CardTitle className="truncate pr-2 text-lg">
                                 {account.name}
                               </CardTitle>
-                              <CardDescription className="text-slate-600">
+                              <CardDescription>
                                 Created{" "}
                                 {new Date(account.created_at).toLocaleDateString("en-US")}
                               </CardDescription>
@@ -325,19 +307,19 @@ export function AccountList({
                           </Badge>
                         </div>
 
-                        <div className="flex flex-col gap-3 rounded-2xl border border-white/60 bg-white/75 p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-secondary/40 p-4 sm:flex-row sm:items-end sm:justify-between">
                           <div className="min-w-0">
-                            <p className="text-sm text-slate-600">Account total</p>
-                            <p className="text-2xl font-semibold text-slate-950">
+                            <p className="text-sm text-muted-foreground">Account total</p>
+                            <p className="text-2xl font-semibold">
                               {formatCurrency(accountTotal, baseCurrency)}
                             </p>
                           </div>
-                          <p className="text-sm text-slate-500 sm:text-right">{detailLabel}</p>
+                          <p className="text-sm text-muted-foreground sm:text-right">{detailLabel}</p>
                         </div>
                       </CardHeader>
 
                       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="text-sm text-slate-600">
+                        <div className="text-sm text-muted-foreground">
                           {getCategoryKey(account.type) === "retirement"
                             ? "Designed for long-term retirement tracking"
                             : getCategoryKey(account.type) === "brokerage"

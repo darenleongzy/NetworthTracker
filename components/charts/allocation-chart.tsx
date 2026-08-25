@@ -1,6 +1,6 @@
 "use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Label } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Label } from "recharts";
 import {
   Card,
   CardContent,
@@ -45,7 +45,7 @@ export function AllocationChart({
 
   if (total === 0) {
     return (
-      <Card>
+      <Card className="chart-card">
         <CardHeader>
           <CardTitle>Asset Allocation</CardTitle>
         </CardHeader>
@@ -64,24 +64,22 @@ export function AllocationChart({
   ].filter((d) => d.value > 0);
 
   return (
-    <Card>
+    <Card className="chart-card">
       <CardHeader>
         <CardTitle>Asset Allocation</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative">
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={258}>
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={52}
-                outerRadius={78}
-                paddingAngle={3}
+                innerRadius={62}
+                outerRadius={91}
+                paddingAngle={4}
                 dataKey="value"
-                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                labelLine={false}
               >
                 <Label
                   position="center"
@@ -94,7 +92,7 @@ export function AllocationChart({
                         y={viewBox.cy}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className="fill-foreground text-[1.5rem] font-bold tracking-tight"
+                        className="fill-foreground text-[1.35rem] font-bold tracking-tight"
                       >
                         {formatCompactCurrency(total, currencySymbol)}
                       </text>
@@ -106,19 +104,22 @@ export function AllocationChart({
                 ))}
               </Pie>
               <Tooltip
+                contentStyle={{ borderRadius: 12, border: "1px solid #dbe5f0", boxShadow: "0 12px 26px rgba(15,23,42,0.12)" }}
                 formatter={(value: number) =>
                   `${currencySymbol}${Math.round(value).toLocaleString("en-US")}`
                 }
               />
-              <Legend
-                layout="horizontal"
-                verticalAlign="bottom"
-                align="center"
-                iconType="circle"
-                wrapperStyle={{ paddingTop: 8 }}
-              />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border/70 pt-4 text-xs sm:grid-cols-4">
+          {data.map((entry) => (
+            <div className="flex min-w-0 items-center gap-2" key={entry.name}>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: COLORS[entry.name] }} />
+              <span className="truncate text-muted-foreground">{entry.name}</span>
+              <span className="ml-auto font-semibold text-foreground">{Math.round((entry.value / total) * 100)}%</span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

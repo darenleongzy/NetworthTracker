@@ -158,11 +158,12 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div className="app-page-header">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Your financial overview</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Overview</p>
+          <h1 className="app-page-title mt-2">Your financial picture</h1>
+          <p className="app-page-subtitle">Balances, progress, and spending in one focused view.</p>
         </div>
         <BaseCurrencySelector currentCurrency={baseCurrency} />
       </div>
@@ -176,7 +177,7 @@ export default async function DashboardPage() {
         baseCurrency={baseCurrency}
       />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 xl:grid-cols-3">
         <div className="min-w-0">
           <NetWorthChart snapshots={snapshots} baseCurrency={baseCurrency} />
         </div>
