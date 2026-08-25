@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +12,6 @@ import {
   Wallet,
   LogOut,
   Menu,
-  TrendingUp,
   Receipt,
   Flame,
   Shield,
@@ -51,7 +51,7 @@ function NavContent({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-4 py-4 shrink-0">
-        <TrendingUp className={cn("h-6 w-6", isDarkSidebar && "text-sidebar-primary")} />
+        <Image src="/track-my-worth-mark.svg" alt="" width={28} height={28} priority />
         <span className="text-lg font-bold">Track My Worth</span>
       </div>
       <div className={cn("h-px shrink-0", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
@@ -187,7 +187,7 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+          <Image src="/track-my-worth-mark.svg" alt="" width={24} height={24} priority />
           <span className="font-bold">Track My Worth</span>
         </div>
       </div>

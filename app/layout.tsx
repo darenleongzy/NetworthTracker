@@ -38,6 +38,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Track My Worth" }],
   creator: "Track My Worth",
   applicationName: "Track My Worth",
+  icons: {
+    icon: [{ url: "/track-my-worth-mark.svg", type: "image/svg+xml" }],
+    shortcut: "/track-my-worth-mark.svg",
+  },
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: "/",

@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Track My Worth</title>
+  <rect width="64" height="64" rx="18" fill="#121C38"/>
+  <path d="M13 45.5L24.2 34.3L32 40.2L49.5 20" stroke="#8757FF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M39.5 20H49.5V30" stroke="#8FF0CF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="40" r="4.25" fill="#8FF0CF" stroke="#121C38" stroke-width="2"/>
+</svg>
