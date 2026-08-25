@@ -19,6 +19,7 @@ import {
   FileText,
   ScrollText,
   Trash2,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,8 @@ function NavContent({
   pathname,
   onSignOut,
   onNavigate,
+  uiPalette,
+  onPaletteChange,
   isDarkSidebar = false,
   isAdmin = false,
 }: {
@@ -43,6 +46,8 @@ function NavContent({
   pathname: string;
   onSignOut: () => void;
   onNavigate?: () => void;
+  uiPalette: "classic" | "refined";
+  onPaletteChange: (palette: "classic" | "refined") => void;
   isDarkSidebar?: boolean;
   isAdmin?: boolean;
 }) {
@@ -78,6 +83,41 @@ function NavContent({
       </nav>
       <div className={cn("h-px shrink-0", isDarkSidebar ? "bg-sidebar-border" : "bg-border")} />
       <div className="p-4 space-y-2 shrink-0">
+        <div
+          className={cn(
+            "mb-3 rounded-xl border p-2.5",
+            isDarkSidebar ? "border-sidebar-border bg-sidebar-accent/45" : "border-border bg-muted/50"
+          )}
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <Palette className="h-3.5 w-3.5 text-sidebar-primary" />
+            <span className={cn("text-xs font-semibold", isDarkSidebar ? "text-sidebar-foreground" : "text-foreground")}>
+              UI color preview
+            </span>
+          </div>
+          <div className="grid grid-cols-2 rounded-lg bg-black/10 p-0.5" aria-label="UI color palette">
+            {(["classic", "refined"] as const).map((palette) => (
+              <button
+                key={palette}
+                type="button"
+                aria-pressed={uiPalette === palette}
+                onClick={() => onPaletteChange(palette)}
+                className={cn(
+                  "rounded-md px-2 py-1.5 text-xs font-semibold capitalize transition-all",
+                  uiPalette === palette
+                    ? isDarkSidebar
+                      ? "bg-sidebar text-sidebar-foreground shadow-sm"
+                      : "bg-background text-foreground shadow-sm"
+                    : isDarkSidebar
+                      ? "text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {palette === "classic" ? "Current" : "New"}
+              </button>
+            ))}
+          </div>
+        </div>
         <p className={cn("text-xs truncate", isDarkSidebar ? "text-sidebar-foreground/60" : "text-muted-foreground")}>
           {userEmail}
         </p>
@@ -156,6 +196,12 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
   const router = useRouter();
   const supabase = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [uiPalette, setUiPalette] = useState<"classic" | "refined">("classic");
+
+  function handlePaletteChange(palette: "classic" | "refined") {
+    setUiPalette(palette);
+    document.documentElement.dataset.uiPalette = palette;
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -182,6 +228,8 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
               pathname={pathname}
               onSignOut={handleSignOut}
               onNavigate={() => setMobileOpen(false)}
+              uiPalette={uiPalette}
+              onPaletteChange={handlePaletteChange}
               isAdmin={isAdmin}
             />
           </SheetContent>
@@ -199,6 +247,8 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
           userEmail={userEmail}
           pathname={pathname}
           onSignOut={handleSignOut}
+          uiPalette={uiPalette}
+          onPaletteChange={handlePaletteChange}
           isDarkSidebar
           isAdmin={isAdmin}
         />
