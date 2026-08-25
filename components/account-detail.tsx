@@ -161,7 +161,7 @@ export function AccountDetail({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/accounts">
@@ -227,7 +227,7 @@ export function AccountDetail({
               holdings={account.cash_holdings}
             />
           </CardHeader>
-          <CardContent className="relative space-y-6">
+          <CardContent className="relative space-y-5">
             <CpfSettingsForm
               accountId={account.id}
               settings={cpfSettings}
@@ -298,7 +298,7 @@ export function AccountDetail({
         </Card>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <AccountHistoryChart
           snapshots={accountValueSnapshots}
           currency={baseCurrency}

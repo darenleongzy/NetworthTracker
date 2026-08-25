@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -49,44 +49,46 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.95 0.01 250);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.55 0.25 285);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0.005 250);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0.005 250);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.01 250);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.55 0.25 285);
-  --chart-1: oklch(0.55 0.25 285);
-  --chart-2: oklch(0.65 0.2 175);
-  --chart-3: oklch(0.7 0.15 85);
-  --chart-4: oklch(0.6 0.22 330);
-  --chart-5: oklch(0.55 0.18 145);
-  --sidebar: oklch(0.25 0.05 260);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.55 0.25 285);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.3 0.05 260);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.35 0.05 260);
-  --sidebar-ring: oklch(0.55 0.25 285);
+  --background: oklch(0.17 0.025 250);
+  --foreground: oklch(0.95 0.012 90);
+  --card: oklch(0.215 0.03 250);
+  --card-foreground: oklch(0.95 0.012 90);
+  --popover: oklch(0.23 0.03 250);
+  --popover-foreground: oklch(0.95 0.012 90);
+  --primary: oklch(0.73 0.12 190);
+  --primary-foreground: oklch(0.18 0.025 250);
+  --secondary: oklch(0.27 0.03 250);
+  --secondary-foreground: oklch(0.94 0.012 90);
+  --muted: oklch(0.255 0.024 250);
+  --muted-foreground: oklch(0.72 0.018 250);
+  --accent: oklch(0.3 0.045 230);
+  --accent-foreground: oklch(0.97 0.008 90);
+  --destructive: oklch(0.7 0.19 25);
+  --border: oklch(0.36 0.03 250 / 72%);
+  --input: oklch(0.32 0.03 250);
+  --ring: oklch(0.73 0.12 190);
+  --chart-1: oklch(0.72 0.13 190);
+  --chart-2: oklch(0.74 0.13 250);
+  --chart-3: oklch(0.78 0.14 75);
+  --chart-4: oklch(0.72 0.14 315);
+  --chart-5: oklch(0.72 0.13 155);
+  --sidebar: oklch(0.14 0.026 250);
+  --sidebar-foreground: oklch(0.95 0.012 90);
+  --sidebar-primary: oklch(0.73 0.12 190);
+  --sidebar-primary-foreground: oklch(0.18 0.025 250);
+  --sidebar-accent: oklch(0.225 0.038 250);
+  --sidebar-accent-foreground: oklch(0.98 0.008 90);
+  --sidebar-border: oklch(0.31 0.034 250);
+  --sidebar-ring: oklch(0.73 0.12 190);
 }
 
-html:not([data-ui-palette="classic"]),
-html[data-ui-palette="refined"] {
+html[data-theme="light"] {
   --background: oklch(0.965 0.012 85);
   --foreground: oklch(0.22 0.025 250);
   --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.025 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.025 250);
   --primary: oklch(0.48 0.11 200);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.945 0.014 85);
@@ -95,6 +97,7 @@ html[data-ui-palette="refined"] {
   --muted-foreground: oklch(0.5 0.025 250);
   --accent: oklch(0.91 0.035 190);
   --accent-foreground: oklch(0.25 0.04 235);
+  --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.87 0.017 85);
   --input: oklch(0.9 0.017 85);
   --ring: oklch(0.48 0.11 200);
@@ -116,70 +119,29 @@ html[data-ui-palette="refined"] {
 .dashboard-summary-card {
   overflow: hidden;
   border-radius: 0.875rem;
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   color: white;
   box-shadow: 0 12px 24px rgb(15 23 42 / 12%);
 }
 
-.dashboard-summary-card--net-worth { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.dashboard-summary-card--cash { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.dashboard-summary-card--investments { background: linear-gradient(135deg, #f59e0b, #f97316); }
-.dashboard-summary-card--retirement { background: linear-gradient(135deg, #14b8a6, #0891b2); }
-.dashboard-summary-card--gain { background: linear-gradient(135deg, #10b981, #16a34a); }
-.dashboard-summary-card--loss { background: linear-gradient(135deg, #f43f5e, #dc2626); }
+.dashboard-summary-card--net-worth { background: linear-gradient(135deg, #1a2948, #2d4d7d); }
+.dashboard-summary-card--cash { background: linear-gradient(135deg, #164954, #23787a); }
+.dashboard-summary-card--investments { background: linear-gradient(135deg, #2a385a, #53679d); }
+.dashboard-summary-card--retirement { background: linear-gradient(135deg, #433563, #6a4f93); }
+.dashboard-summary-card--gain { background: linear-gradient(135deg, #195f50, #2f896f); }
+.dashboard-summary-card--loss { background: linear-gradient(135deg, #783846, #aa515e); }
 
-html:not([data-ui-palette="classic"]) .dashboard-summary-card,
-html[data-ui-palette="refined"] .dashboard-summary-card {
+html[data-theme="light"] .dashboard-summary-card {
   border: 1px solid rgb(255 255 255 / 14%);
   box-shadow: 0 14px 28px rgb(15 23 42 / 14%);
 }
 
-html:not([data-ui-palette="classic"]) .dashboard-summary-card--net-worth,
-html[data-ui-palette="refined"] .dashboard-summary-card--net-worth { background: linear-gradient(135deg, #121d33, #263e68); }
-html:not([data-ui-palette="classic"]) .dashboard-summary-card--cash,
-html[data-ui-palette="refined"] .dashboard-summary-card--cash { background: linear-gradient(135deg, #154957, #21717a); }
-html:not([data-ui-palette="classic"]) .dashboard-summary-card--investments,
-html[data-ui-palette="refined"] .dashboard-summary-card--investments { background: linear-gradient(135deg, #28365c, #4b5c93); }
-html:not([data-ui-palette="classic"]) .dashboard-summary-card--retirement,
-html[data-ui-palette="refined"] .dashboard-summary-card--retirement { background: linear-gradient(135deg, #4b356d, #6b508f); }
-html:not([data-ui-palette="classic"]) .dashboard-summary-card--gain,
-html[data-ui-palette="refined"] .dashboard-summary-card--gain { background: linear-gradient(135deg, #1a5f50, #2d806d); }
-html:not([data-ui-palette="classic"]) .dashboard-summary-card--loss,
-html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: linear-gradient(135deg, #873b4b, #b1535e); }
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.65 0.25 285);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.65 0.25 285);
-  --chart-1: oklch(0.65 0.25 285);
-  --chart-2: oklch(0.7 0.2 175);
-  --chart-3: oklch(0.75 0.15 85);
-  --chart-4: oklch(0.65 0.22 330);
-  --chart-5: oklch(0.6 0.18 145);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.65 0.25 285);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.25 285);
-}
+html[data-theme="light"] .dashboard-summary-card--net-worth { background: linear-gradient(135deg, #121d33, #263e68); }
+html[data-theme="light"] .dashboard-summary-card--cash { background: linear-gradient(135deg, #154957, #21717a); }
+html[data-theme="light"] .dashboard-summary-card--investments { background: linear-gradient(135deg, #28365c, #4b5c93); }
+html[data-theme="light"] .dashboard-summary-card--retirement { background: linear-gradient(135deg, #4b356d, #6b508f); }
+html[data-theme="light"] .dashboard-summary-card--gain { background: linear-gradient(135deg, #1a5f50, #2d806d); }
+html[data-theme="light"] .dashboard-summary-card--loss { background: linear-gradient(135deg, #873b4b, #b1535e); }
 
 @layer base {
   * {
@@ -197,6 +159,13 @@ html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: line
     radial-gradient(circle at 100% 0%, rgb(20 120 115 / 10%), transparent 28rem),
     radial-gradient(circle at 10% 0%, rgb(231 188 107 / 11%), transparent 23rem),
     linear-gradient(180deg, #fbfaf7 0%, var(--background) 26rem);
+}
+
+html[data-theme="dark"] .app-workspace {
+  background:
+    radial-gradient(circle at 100% 0%, rgb(45 178 166 / 12%), transparent 32rem),
+    radial-gradient(circle at 6% 0%, rgb(81 103 196 / 12%), transparent 26rem),
+    linear-gradient(180deg, #111c31 0%, var(--background) 30rem);
 }
 
 .app-page-header {
@@ -226,12 +195,18 @@ html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: line
   box-shadow: 0 14px 30px rgb(15 23 42 / 5%);
 }
 
+html[data-theme="dark"] .chart-card {
+  border-color: rgb(129 157 193 / 18%);
+  background: linear-gradient(145deg, rgb(34 52 79 / 96%), rgb(28 43 67 / 96%));
+  box-shadow: 0 16px 36px rgb(4 10 24 / 24%);
+}
+
 .chart-card > [data-slot="card-header"] {
-  padding: 1.25rem 1.25rem 0.75rem;
+  padding: 1rem 1rem 0.5rem;
 }
 
 .chart-card > [data-slot="card-content"] {
-  padding: 0.75rem 1.25rem 1.25rem;
+  padding: 0.5rem 1rem 1rem;
 }
 
 .accounts-overview {
@@ -264,7 +239,32 @@ html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: line
   box-shadow: 0 16px 32px rgb(15 23 42 / 4%);
 }
 
+html[data-theme="dark"] .account-category-tab,
+html[data-theme="dark"] .account-list-surface {
+  border-color: rgb(129 157 193 / 18%);
+  background: rgb(27 43 67 / 78%);
+  box-shadow: 0 16px 32px rgb(4 10 24 / 16%);
+}
+
+html[data-theme="dark"] .account-category-tab[data-state="active"] {
+  border-color: rgb(92 211 190 / 56%);
+  background: rgb(45 104 111 / 34%);
+  box-shadow: 0 12px 26px rgb(10 55 62 / 24%);
+}
+
 @media (min-width: 640px) {
+  .dashboard-summary-card {
+    padding: 1.5rem;
+  }
+
+  .chart-card > [data-slot="card-header"] {
+    padding: 1.25rem 1.25rem 0.75rem;
+  }
+
+  .chart-card > [data-slot="card-content"] {
+    padding: 0.75rem 1.25rem 1.25rem;
+  }
+
   .app-page-header {
     flex-direction: row;
     align-items: end;

@@ -36,7 +36,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen bg-background">
       <NavProgress />
       <DashboardNav userEmail={user.email ?? ""} isAdmin={isAdmin} />
-      <main className="app-workspace flex-1 overflow-auto p-5 pt-20 sm:p-6 lg:p-8 lg:pt-8">
+      <main className="app-workspace flex-1 overflow-auto p-4 pt-[4.5rem] sm:p-5 sm:pt-6 lg:p-8 lg:pt-8">
         {children}
       </main>
     </div>

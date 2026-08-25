@@ -30,7 +30,7 @@ export default async function AccountsPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6">
+    <div className="mx-auto max-w-[1600px] space-y-5">
       <div className="app-page-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Portfolio</p>
