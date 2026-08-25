@@ -21,10 +21,10 @@ function formatCompactCurrency(value: number, currencySymbol: string): string {
 }
 
 const COLORS: Record<string, string> = {
-  Cash: "#22c55e",       // green
-  Investments: "#3b82f6", // blue
-  CPF: "#f59e0b",        // amber
-  SRS: "#8b5cf6",        // violet
+  Cash: "#0f766e",
+  Investments: "#4f46e5",
+  CPF: "#b7791f",
+  SRS: "#7c3aed",
 };
 
 export function AllocationChart({
