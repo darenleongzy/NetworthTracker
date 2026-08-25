@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -20,10 +19,10 @@ import {
 import type { AccountValueSnapshot } from "@/lib/types";
 
 const SERIES = [
-  { key: "cash", label: "Cash", color: "#22c55e" },
-  { key: "investment", label: "Investments", color: "#3b82f6" },
-  { key: "cpf", label: "CPF", color: "#f59e0b" },
-  { key: "srs", label: "SRS", color: "#8b5cf6" },
+  { key: "cash", label: "Cash", color: "#0f766e" },
+  { key: "investment", label: "Investments", color: "#4f46e5" },
+  { key: "cpf", label: "CPF", color: "#b7791f" },
+  { key: "srs", label: "SRS", color: "#7c3aed" },
 ] as const;
 
 const RANGE_OPTIONS: { value: AccountHistoryRange; label: string }[] = [
@@ -59,19 +58,20 @@ export function AccountTypeMonthlyChart({
   }
 
   const symbol = getCurrencySymbol(baseCurrency);
+  const latestRow = data.at(-1);
 
   return (
     <Card className="chart-card">
       <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle>Account Totals by Type</CardTitle>
+          <CardTitle>Balances by account type</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            End-of-period values from saved account snapshots.
+            End-of-period values, grouped by how you hold your money.
           </p>
         </div>
         <div
           aria-label="Account history range"
-          className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-100/80 p-1 shadow-inner"
+          className="inline-flex w-fit rounded-xl border border-border/80 bg-secondary/70 p-1"
         >
           {RANGE_OPTIONS.map((option) => (
             <button
@@ -81,8 +81,8 @@ export function AccountTypeMonthlyChart({
               aria-pressed={range === option.value}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
                 range === option.value
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                  : "text-slate-500 hover:bg-white hover:text-slate-950"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-background hover:text-foreground"
               }`}
             >
               {option.label}
@@ -91,16 +91,19 @@ export function AccountTypeMonthlyChart({
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="label" className="text-xs" minTickGap={24} />
+        <ResponsiveContainer width="100%" height={272}>
+          <LineChart data={data} margin={{ top: 12, right: 10, left: -12, bottom: 0 }}>
+            <CartesianGrid vertical={false} stroke="#e8edf4" strokeDasharray="2 5" />
+            <XAxis dataKey="label" className="text-xs" minTickGap={24} axisLine={false} tickLine={false} />
             <YAxis
               className="text-xs"
+              axisLine={false}
+              tickLine={false}
               tickFormatter={(value) => `${symbol}${Number(value).toLocaleString()}`}
             />
             <Tooltip
-              cursor={{ stroke: "hsl(var(--muted-foreground))", strokeDasharray: "3 3" }}
+              cursor={{ stroke: "#cbd5e1", strokeDasharray: "2 4" }}
+              contentStyle={{ borderRadius: 12, border: "1px solid #dbe5f0", boxShadow: "0 12px 26px rgba(15,23,42,0.12)" }}
               formatter={(value: number) =>
                 `${symbol}${value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -108,7 +111,6 @@ export function AccountTypeMonthlyChart({
                 })}`
               }
             />
-            <Legend />
             {SERIES.map((series) => (
               <Line
                 key={series.key}
@@ -116,8 +118,8 @@ export function AccountTypeMonthlyChart({
                 dataKey={series.key}
                 name={series.label}
                 stroke={series.color}
-                strokeWidth={3}
-                dot={{ r: 2.5, fill: series.color, strokeWidth: 0 }}
+                strokeWidth={2.5}
+                dot={false}
                 activeDot={{ r: 5, fill: series.color, stroke: "#ffffff", strokeWidth: 2 }}
                 connectNulls={false}
                 isAnimationActive={false}
@@ -125,6 +127,20 @@ export function AccountTypeMonthlyChart({
             ))}
           </LineChart>
         </ResponsiveContainer>
+        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/70 pt-4 text-xs sm:grid-cols-4">
+          {SERIES.map((series) => {
+            const value = latestRow?.[series.key];
+            return (
+              <div className="flex min-w-0 items-center gap-2" key={series.key}>
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: series.color }} />
+                <span className="truncate text-muted-foreground">{series.label}</span>
+                <span className="ml-auto font-semibold text-foreground">
+                  {value === null || value === undefined ? "-" : `${symbol}${Math.round(value).toLocaleString()}`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );

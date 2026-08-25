@@ -196,7 +196,7 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
   const router = useRouter();
   const supabase = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [uiPalette, setUiPalette] = useState<"classic" | "refined">("classic");
+  const [uiPalette, setUiPalette] = useState<"classic" | "refined">("refined");
 
   function handlePaletteChange(palette: "classic" | "refined") {
     setUiPalette(palette);

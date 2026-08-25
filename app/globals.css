@@ -82,34 +82,35 @@
   --sidebar-ring: oklch(0.55 0.25 285);
 }
 
+html:not([data-ui-palette="classic"]),
 html[data-ui-palette="refined"] {
-  --background: oklch(0.975 0.008 230);
+  --background: oklch(0.965 0.012 85);
   --foreground: oklch(0.22 0.025 250);
   --card: oklch(1 0 0);
-  --primary: oklch(0.52 0.16 250);
+  --primary: oklch(0.48 0.11 200);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.955 0.012 230);
+  --secondary: oklch(0.945 0.014 85);
   --secondary-foreground: oklch(0.25 0.025 250);
-  --muted: oklch(0.95 0.012 230);
+  --muted: oklch(0.93 0.015 85);
   --muted-foreground: oklch(0.5 0.025 250);
-  --accent: oklch(0.94 0.028 210);
+  --accent: oklch(0.91 0.035 190);
   --accent-foreground: oklch(0.25 0.04 235);
-  --border: oklch(0.89 0.018 230);
-  --input: oklch(0.9 0.018 230);
-  --ring: oklch(0.52 0.16 250);
-  --chart-1: oklch(0.52 0.16 250);
-  --chart-2: oklch(0.58 0.14 185);
-  --chart-3: oklch(0.67 0.13 80);
-  --chart-4: oklch(0.6 0.16 310);
-  --chart-5: oklch(0.58 0.13 150);
-  --sidebar: oklch(0.22 0.035 250);
-  --sidebar-foreground: oklch(0.96 0.008 230);
-  --sidebar-primary: oklch(0.68 0.14 190);
+  --border: oklch(0.87 0.017 85);
+  --input: oklch(0.9 0.017 85);
+  --ring: oklch(0.48 0.11 200);
+  --chart-1: oklch(0.48 0.11 200);
+  --chart-2: oklch(0.56 0.13 250);
+  --chart-3: oklch(0.66 0.13 75);
+  --chart-4: oklch(0.56 0.13 310);
+  --chart-5: oklch(0.55 0.13 155);
+  --sidebar: oklch(0.19 0.028 250);
+  --sidebar-foreground: oklch(0.97 0.01 85);
+  --sidebar-primary: oklch(0.74 0.12 180);
   --sidebar-primary-foreground: oklch(0.2 0.035 250);
-  --sidebar-accent: oklch(0.29 0.04 250);
-  --sidebar-accent-foreground: oklch(0.98 0.005 230);
-  --sidebar-border: oklch(0.35 0.035 250);
-  --sidebar-ring: oklch(0.68 0.14 190);
+  --sidebar-accent: oklch(0.27 0.035 250);
+  --sidebar-accent-foreground: oklch(0.98 0.008 85);
+  --sidebar-border: oklch(0.31 0.03 250);
+  --sidebar-ring: oklch(0.74 0.12 180);
 }
 
 .dashboard-summary-card {
@@ -127,17 +128,24 @@ html[data-ui-palette="refined"] {
 .dashboard-summary-card--gain { background: linear-gradient(135deg, #10b981, #16a34a); }
 .dashboard-summary-card--loss { background: linear-gradient(135deg, #f43f5e, #dc2626); }
 
+html:not([data-ui-palette="classic"]) .dashboard-summary-card,
 html[data-ui-palette="refined"] .dashboard-summary-card {
   border: 1px solid rgb(255 255 255 / 14%);
   box-shadow: 0 14px 28px rgb(15 23 42 / 14%);
 }
 
-html[data-ui-palette="refined"] .dashboard-summary-card--net-worth { background: linear-gradient(135deg, #19345b, #315d91); }
-html[data-ui-palette="refined"] .dashboard-summary-card--cash { background: linear-gradient(135deg, #175d8e, #1786a3); }
-html[data-ui-palette="refined"] .dashboard-summary-card--investments { background: linear-gradient(135deg, #8d5f22, #bd8131); }
-html[data-ui-palette="refined"] .dashboard-summary-card--retirement { background: linear-gradient(135deg, #167667, #279180); }
-html[data-ui-palette="refined"] .dashboard-summary-card--gain { background: linear-gradient(135deg, #197052, #278760); }
-html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: linear-gradient(135deg, #a7444d, #c55756); }
+html:not([data-ui-palette="classic"]) .dashboard-summary-card--net-worth,
+html[data-ui-palette="refined"] .dashboard-summary-card--net-worth { background: linear-gradient(135deg, #121d33, #263e68); }
+html:not([data-ui-palette="classic"]) .dashboard-summary-card--cash,
+html[data-ui-palette="refined"] .dashboard-summary-card--cash { background: linear-gradient(135deg, #154957, #21717a); }
+html:not([data-ui-palette="classic"]) .dashboard-summary-card--investments,
+html[data-ui-palette="refined"] .dashboard-summary-card--investments { background: linear-gradient(135deg, #28365c, #4b5c93); }
+html:not([data-ui-palette="classic"]) .dashboard-summary-card--retirement,
+html[data-ui-palette="refined"] .dashboard-summary-card--retirement { background: linear-gradient(135deg, #4b356d, #6b508f); }
+html:not([data-ui-palette="classic"]) .dashboard-summary-card--gain,
+html[data-ui-palette="refined"] .dashboard-summary-card--gain { background: linear-gradient(135deg, #1a5f50, #2d806d); }
+html:not([data-ui-palette="classic"]) .dashboard-summary-card--loss,
+html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: linear-gradient(135deg, #873b4b, #b1535e); }
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -186,8 +194,9 @@ html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: line
 
 .app-workspace {
   background:
-    radial-gradient(circle at 100% 0%, rgb(45 108 223 / 7%), transparent 26rem),
-    linear-gradient(180deg, #f8fafc 0%, var(--background) 24rem);
+    radial-gradient(circle at 100% 0%, rgb(20 120 115 / 10%), transparent 28rem),
+    radial-gradient(circle at 10% 0%, rgb(231 188 107 / 11%), transparent 23rem),
+    linear-gradient(180deg, #fbfaf7 0%, var(--background) 26rem);
 }
 
 .app-page-header {
