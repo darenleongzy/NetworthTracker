@@ -96,12 +96,11 @@ export default async function FirePage() {
   const averageMonthlyExpenses = totalExpenses / monthsWithData;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1600px] space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">FIRE Planning</h1>
-        <p className="text-muted-foreground">
-          Plan your path to financial independence
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Independence</p>
+        <h1 className="app-page-title mt-2">FIRE planning</h1>
+        <p className="app-page-subtitle">Model the path from today&apos;s balance to financial independence.</p>
       </div>
 
       <FireCalculator

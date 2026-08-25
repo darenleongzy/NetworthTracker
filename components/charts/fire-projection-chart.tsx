@@ -10,7 +10,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Legend,
 } from "recharts";
 import {
   Card,
@@ -54,7 +53,7 @@ export function FireProjectionChart({
 
   if (projection.length === 0) {
     return (
-      <Card>
+      <Card className="chart-card">
         <CardHeader>
           <CardTitle>Net Worth Projection</CardTitle>
         </CardHeader>
@@ -66,26 +65,33 @@ export function FireProjectionChart({
   }
 
   return (
-    <Card>
+    <Card className="chart-card">
       <CardHeader>
         <CardTitle>Net Worth Projection</CardTitle>
+        <p className="mt-1 text-sm text-muted-foreground">Your expected balance against the financial independence target.</p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <ResponsiveContainer width="100%" height={320}>
+          <LineChart data={chartData} margin={{ top: 12, right: 10, left: -4, bottom: 0 }}>
+            <CartesianGrid vertical={false} stroke="#e8edf4" strokeDasharray="2 5" />
             <XAxis
               dataKey="label"
               className="text-xs"
               interval="preserveStartEnd"
               tick={{ fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis
               className="text-xs"
               tickFormatter={formatValue}
               width={70}
+              axisLine={false}
+              tickLine={false}
             />
             <Tooltip
+              cursor={{ stroke: "#cbd5e1", strokeDasharray: "2 4" }}
+              contentStyle={{ borderRadius: 12, border: "1px solid #dbe5f0", boxShadow: "0 12px 26px rgba(15,23,42,0.12)" }}
               formatter={(value: number, name: string) => [
                 `${currencySymbol}${value.toLocaleString("en-US", {
                   minimumFractionDigits: 0,
@@ -95,14 +101,9 @@ export function FireProjectionChart({
               ]}
               labelFormatter={(label) => label}
             />
-            <Legend
-              formatter={(value) =>
-                value === "netWorth" ? "Projected Net Worth" : "FIRE Target"
-              }
-            />
             <ReferenceLine
               y={fireNumber}
-              stroke="#f97316"
+              stroke="#b7791f"
               strokeDasharray="5 5"
               strokeWidth={2}
             />
@@ -110,9 +111,10 @@ export function FireProjectionChart({
               type="monotone"
               dataKey="netWorth"
               name="netWorth"
-              stroke="#22c55e"
-              strokeWidth={2}
+              stroke="#0f766e"
+              strokeWidth={3}
               dot={false}
+              activeDot={{ r: 5, fill: "#0f766e", stroke: "#ffffff", strokeWidth: 2 }}
             />
             <Line
               type="monotone"
@@ -125,6 +127,10 @@ export function FireProjectionChart({
             />
           </LineChart>
         </ResponsiveContainer>
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-border/70 pt-4 text-xs">
+          <span className="flex items-center gap-2 text-muted-foreground"><span className="h-2.5 w-2.5 rounded-full bg-[#0f766e]" />Projected net worth</span>
+          <span className="flex items-center gap-2 text-muted-foreground"><span className="h-0 w-4 border-t-2 border-dashed border-[#b7791f]" />FIRE target</span>
+        </div>
         {yearsToFire !== null && (
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Projected to reach FIRE in{" "}

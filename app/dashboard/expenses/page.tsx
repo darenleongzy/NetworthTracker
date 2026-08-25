@@ -41,37 +41,27 @@ export default async function ExpensesPage() {
     {
       title: "Total Expenses",
       value: totalExpenses,
-      tone:
-        "border-transparent bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-purple-500/25",
-      text: "text-white",
-      subtext: "text-white/80",
+      tone: "dashboard-summary-card--net-worth",
     },
     {
       title: "Recurring",
       value: recurringTotal,
-      tone:
-        "border-transparent bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25",
-      text: "text-white",
-      subtext: "text-white/80",
+      tone: "dashboard-summary-card--cash",
     },
     {
       title: "Non-Recurring",
       value: nonRecurringTotal,
-      tone:
-        "border-transparent bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25",
-      text: "text-white",
-      subtext: "text-white/80",
+      tone: "dashboard-summary-card--investments",
     },
   ] as const;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div className="app-page-header">
         <div>
-          <h1 className="text-2xl font-bold">Expenses</h1>
-          <p className="text-muted-foreground">
-            Track and categorize your spending
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Spending</p>
+          <h1 className="app-page-title mt-2">Expenses</h1>
+          <p className="app-page-subtitle">Track recurring commitments and everyday spending.</p>
         </div>
         <ExpenseForm />
       </div>
@@ -80,15 +70,15 @@ export default async function ExpensesPage() {
         {expenseCards.map((card) => (
           <Card
             key={card.title}
-            className={`overflow-hidden rounded-[1.4rem] border ${card.tone}`}
+            className={`dashboard-summary-card ${card.tone}`}
           >
             <CardHeader className="pb-2">
-              <CardTitle className={`text-sm font-medium ${card.subtext}`}>
+              <CardTitle className="text-sm font-medium text-white/85">
                 {card.title}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`text-center text-[clamp(1.35rem,4vw,2.35rem)] font-bold leading-tight tracking-tight sm:text-left ${card.text}`}>
+              <div className="text-center text-[clamp(1.35rem,4vw,2.35rem)] font-bold leading-tight tracking-tight sm:text-left">
                 {formatExpenseAmount(card.value)}
               </div>
             </CardContent>
@@ -103,7 +93,7 @@ export default async function ExpensesPage() {
             title="This Month's Breakdown"
           />
         </div>
-        <Card className="min-w-0 overflow-hidden">
+        <Card className="chart-card min-w-0">
           <CardHeader>
             <CardTitle>All Expenses</CardTitle>
           </CardHeader>
