@@ -105,6 +105,30 @@ export interface AccountWithHoldings extends Account {
   stock_holdings: StockHolding[];
 }
 
+export type CoupleConnectionStatus = "pending" | "connected" | "declined" | "ended";
+
+export interface CoupleConnection {
+  id: string;
+  inviter_id: string;
+  invitee_id: string;
+  inviter_email: string;
+  invitee_email: string;
+  status: CoupleConnectionStatus;
+  goal_amount: number;
+  goal_include_cpf: boolean;
+  invite_sent_at: string;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CoupleAssetBreakdown = {
+  cash: number;
+  investments: number;
+  cpf: number;
+  srs: number;
+};
+
 export interface CpfAccountSettings {
   account_id: string;
   current_age: number;

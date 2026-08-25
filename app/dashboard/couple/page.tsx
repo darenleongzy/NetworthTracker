@@ -1,0 +1,54 @@
+export const dynamic = "force-dynamic";
+
+import { createClient } from "@/lib/supabase/server";
+import { getExchangeRates } from "@/lib/exchange-rates";
+import { getStockPrices } from "@/lib/stock-api";
+import { calculateCoupleAssetBreakdown } from "@/lib/couple-calculations";
+import { CoupleDashboard } from "@/components/couple-dashboard";
+import type { AccountWithHoldings, CoupleConnection } from "@/lib/types";
+
+export default async function CouplePage() {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+  if (!userId) return null;
+
+  const [{ data: connection }, { data: preferences }] = await Promise.all([
+    supabase
+      .from("couple_connections")
+      .select("*")
+      .or(`inviter_id.eq.${userId},invitee_id.eq.${userId}`)
+      .in("status", ["pending", "connected"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("user_preferences").select("base_currency").maybeSingle(),
+  ]);
+
+  const typedConnection = (connection ?? null) as CoupleConnection | null;
+  const baseCurrency = preferences?.base_currency ?? "USD";
+  let breakdown = { cash: 0, investments: 0, cpf: 0, srs: 0 };
+
+  if (typedConnection?.status === "connected") {
+    const { data: accounts } = await supabase
+      .from("accounts")
+      .select("*, cash_holdings(*), stock_holdings(*)")
+      .order("created_at", { ascending: true });
+    const typedAccounts = (accounts ?? []) as AccountWithHoldings[];
+    const tickers = typedAccounts.flatMap((account) => account.stock_holdings.map((holding) => holding.ticker));
+    const [exchangeRates, stockPrices] = await Promise.all([
+      getExchangeRates(baseCurrency),
+      tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
+    ]);
+    breakdown = calculateCoupleAssetBreakdown(typedAccounts, baseCurrency, exchangeRates, stockPrices);
+  }
+
+  return (
+    <CoupleDashboard
+      connection={typedConnection}
+      currentUserId={userId}
+      baseCurrency={baseCurrency}
+      breakdown={breakdown}
+    />
+  );
+}

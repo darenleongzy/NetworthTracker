@@ -8,13 +8,13 @@ const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "noreply@yourapp.com";
 
 interface EmailRequest {
   to: string;
-  template: "waitlist_confirmation" | "waitlist_invite";
+  template: "waitlist_confirmation" | "waitlist_invite" | "couple_invite";
   data: Record<string, unknown>;
 }
 
 function getEmailContent(
   template: string,
-  _data: Record<string, unknown>
+  data: Record<string, unknown>
 ): { subject: string; html: string } {
   switch (template) {
     case "waitlist_confirmation":
@@ -69,6 +69,35 @@ function getEmailContent(
 </html>
         `.trim(),
       };
+
+    case "couple_invite": {
+      const senderEmail = typeof data.senderEmail === "string" ? data.senderEmail : "Your partner";
+      const isReminder = data.isReminder === true;
+      return {
+        subject: isReminder
+          ? "Reminder: your Track My Worth couple invite is waiting"
+          : "You have a Track My Worth couple invite",
+        html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#172033;max-width:600px;margin:0 auto;padding:20px;">
+  <div style="background:linear-gradient(135deg,#18334d,#247b86);padding:30px;border-radius:16px 16px 0 0;">
+    <p style="margin:0 0 8px;color:#b9f5e7;font-size:12px;font-weight:700;letter-spacing:1.6px;">TRACK MY WORTH</p>
+    <h1 style="color:white;margin:0;font-size:26px;">Build your shared picture</h1>
+  </div>
+  <div style="background:#f8fafc;padding:30px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 16px 16px;">
+    <p style="margin-top:0;"><strong>${senderEmail}</strong> invited you to connect in Couple Mode.</p>
+    <p>Accept the invite to see a combined view of your assets and set shared goals together. Your accounts remain individually managed.</p>
+    <div style="text-align:center;margin:30px 0;">
+      <a href="${SITE_URL}/dashboard/couple" style="background:#158c86;color:white;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;">Review invite</a>
+    </div>
+    <p style="margin-bottom:0;color:#64748b;font-size:14px;">You can accept or decline this invitation from the Couple tab.</p>
+  </div>
+</body>
+</html>`.trim(),
+      };
+    }
 
     default:
       throw new Error(`Unknown email template: ${template}`);

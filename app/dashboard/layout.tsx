@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CoupleInviteNotifier } from "@/components/couple-invite-notifier";
 import { NavProgress } from "@/components/nav-progress";
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-background">
       <NavProgress />
+      <CoupleInviteNotifier />
       <DashboardNav userEmail={user.email ?? ""} isAdmin={isAdmin} />
       <main className="app-workspace flex-1 overflow-auto p-4 pt-[4.5rem] sm:p-5 sm:pt-6 lg:p-8 lg:pt-8">
         {children}
