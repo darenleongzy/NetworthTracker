@@ -72,7 +72,7 @@ export default function FeaturesPage() {
               Sign in
             </Link>
             <Link href="/signup" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-              Request access
+              Sign up
             </Link>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function FeaturesPage() {
           your financial progress over time.
         </p>
         <Link href="/signup" className="mt-8 inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-          Request access to Track My Worth
+          Sign up for Track My Worth
         </Link>
       </section>
     </main>

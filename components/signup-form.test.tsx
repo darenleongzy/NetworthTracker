@@ -37,20 +37,6 @@ describe("SignupForm", () => {
       expect(screen.getByRole("button", { name: "Sign up" })).toBeInTheDocument();
     });
 
-    it("renders limited banner when showLimitedBanner is true", () => {
-      render(<SignupForm showLimitedBanner={true} remainingSlots={10} />);
-
-      expect(screen.getByText(/10/)).toBeInTheDocument();
-    });
-
-    it("does not render limited banner when showLimitedBanner is false", () => {
-      render(<SignupForm showLimitedBanner={false} remainingSlots={10} />);
-
-      // The number 10 should not appear in a banner context
-      const container = screen.queryByText(/spots? left/i);
-      expect(container).not.toBeInTheDocument();
-    });
-
     it("renders sign in link", () => {
       render(<SignupForm />);
 

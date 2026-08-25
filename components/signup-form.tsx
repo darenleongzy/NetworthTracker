@@ -14,14 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LimitedLaunchBanner } from "@/components/limited-launch-banner";
-
-interface SignupFormProps {
-  showLimitedBanner?: boolean;
-  remainingSlots?: number;
-}
-
-export function SignupForm({ showLimitedBanner, remainingSlots }: SignupFormProps) {
+export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -84,15 +77,13 @@ export function SignupForm({ showLimitedBanner, remainingSlots }: SignupFormProp
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {showLimitedBanner && remainingSlots !== undefined && (
-          <LimitedLaunchBanner remainingSlots={remainingSlots} />
-        )}
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -104,6 +95,7 @@ export function SignupForm({ showLimitedBanner, remainingSlots }: SignupFormProp
             <Input
               id="password"
               type="password"
+              autoComplete="new-password"
               placeholder="At least 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

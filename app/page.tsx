@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Shield, BarChart3, Sparkles, Heart } from "lucide-react";
+import { TrendingUp, Shield, BarChart3, Heart } from "lucide-react";
 import {
   OrganizationSchema,
   SoftwareApplicationSchema,
@@ -22,53 +22,41 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col">
       <OrganizationSchema />
       <SoftwareApplicationSchema />
-      <header className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center gap-2">
-          <Image src="/track-my-worth-mark.svg" alt="" width={28} height={28} priority />
-          <span className="text-xl font-bold">Track My Worth</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/features">
-            <Button variant="ghost">Features</Button>
+      <header className="border-b">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+          <Link href="/" className="flex min-w-0 items-center gap-2 font-bold">
+            <Image className="shrink-0" src="/track-my-worth-mark.svg" alt="" width={28} height={28} priority />
+            <span className="truncate text-base sm:text-xl">Track My Worth</span>
           </Link>
-          <Link href="/login">
-            <Button variant="ghost">Sign in</Button>
-          </Link>
-          <Link href="/signup">
-            <Button>Request Access</Button>
-          </Link>
+          <nav className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Link href="/features" className="hidden sm:block">
+              <Button variant="ghost">Features</Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="ghost" className="px-2 sm:px-3">Sign in</Button>
+            </Link>
+            <Link href="/signup">
+              <Button className="px-3 sm:px-4">Sign up</Button>
+            </Link>
+          </nav>
         </div>
       </header>
 
       <main className="flex-1">
-        <section className="flex flex-col items-center justify-center px-6 py-24 text-center">
-          {/* Early Access Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-            <Sparkles className="h-4 w-4" />
-            <span>Early Access &mdash; Limited Spots Available</span>
-          </div>
-
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+        <section className="flex flex-col items-center justify-center px-5 py-16 text-center sm:px-6 sm:py-24">
+          <h1 className="max-w-4xl text-[clamp(2.35rem,10vw,4rem)] font-bold leading-[1.05] tracking-tight">
             Track Your <span className="text-primary">Net Worth</span>
           </h1>
-          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+          <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
             Monitor your savings, investments, and overall financial health in
             one simple dashboard. See how your wealth grows over time.
           </p>
-
-          {/* Invite-Only Notice */}
-          <p className="mt-4 text-sm text-muted-foreground">
-            We&apos;re currently invite-only to ensure the best experience.
-            <br />
-            Join the waitlist to get early access.
-          </p>
-
-          <div className="mt-8 flex gap-4">
+          <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:gap-4">
             <Link href="/signup">
-              <Button size="lg">Request Access</Button>
+              <Button size="lg" className="w-full sm:w-auto">Sign up</Button>
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
                 Sign In
               </Button>
             </Link>
@@ -76,7 +64,7 @@ export default function LandingPage() {
         </section>
 
         {/* Dashboard Preview Section */}
-        <section className="px-6 py-16">
+        <section className="px-5 py-14 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="mb-8 text-center text-2xl font-semibold">
               See Your Finances at a Glance
@@ -111,7 +99,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t px-6 py-16">
+        <section className="border-t px-5 py-14 sm:px-6 sm:py-16">
           <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
