@@ -6,7 +6,6 @@ import {
   getAccountHistoryEvents,
   getAccountValueSnapshots,
   getCpfAccountSettings,
-  getUserPreferences,
 } from "@/lib/actions";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { getStockPrices } from "@/lib/stock-api";
@@ -21,13 +20,13 @@ export default async function AccountDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: account }, preferences] = await Promise.all([
+  const [{ data: account }, preferencesRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
       .eq("id", id)
       .single(),
-    getUserPreferences(),
+    supabase.from("user_preferences").select("base_currency").maybeSingle(),
   ]);
 
   if (!account) notFound();
@@ -39,7 +38,7 @@ export default async function AccountDetailPage({
     getAccountValueSnapshots(account.id),
   ]);
 
-  const baseCurrency = preferences.base_currency;
+  const baseCurrency = preferencesRes.data?.base_currency ?? "USD";
   // Fetch stock prices if this is an investment account
   const stockHoldings = (account as AccountWithHoldings).stock_holdings;
   const tickers = stockHoldings.map((h) => h.ticker);
