@@ -183,3 +183,82 @@ html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: line
     @apply bg-background text-foreground;
   }
 }
+
+.app-workspace {
+  background:
+    radial-gradient(circle at 100% 0%, rgb(45 108 223 / 7%), transparent 26rem),
+    linear-gradient(180deg, #f8fafc 0%, var(--background) 24rem);
+}
+
+.app-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.app-page-title {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.app-page-subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--muted-foreground);
+}
+
+.chart-card {
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--border) 82%, white);
+  border-radius: 1.25rem;
+  background: color-mix(in oklch, var(--card) 96%, #eff6ff);
+  box-shadow: 0 14px 30px rgb(15 23 42 / 5%);
+}
+
+.chart-card > [data-slot="card-header"] {
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.chart-card > [data-slot="card-content"] {
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+
+.accounts-overview {
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(circle at 88% 22%, rgb(83 211 183 / 28%), transparent 22rem),
+    linear-gradient(125deg, #12213c 0%, #19365b 56%, #235d79 100%);
+  box-shadow: 0 24px 52px rgb(15 23 42 / 18%);
+}
+
+.account-category-tab {
+  border: 1px solid color-mix(in oklch, var(--border) 86%, white);
+  border-radius: 1rem;
+  background: color-mix(in oklch, var(--card) 94%, #f1f5f9);
+  box-shadow: 0 8px 18px rgb(15 23 42 / 4%);
+}
+
+.account-category-tab[data-state="active"] {
+  border-color: color-mix(in oklch, var(--primary) 32%, white);
+  background: color-mix(in oklch, var(--primary) 8%, white);
+  box-shadow: 0 12px 24px rgb(45 108 223 / 12%);
+}
+
+.account-list-surface {
+  border: 1px solid color-mix(in oklch, var(--border) 88%, white);
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 72%);
+  box-shadow: 0 16px 32px rgb(15 23 42 / 4%);
+}
+
+@media (min-width: 640px) {
+  .app-page-header {
+    flex-direction: row;
+    align-items: end;
+    justify-content: space-between;
+  }
+}

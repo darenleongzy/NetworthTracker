@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -260,6 +260,7 @@ export function NetWorthChart({
 }) {
   const [range, setRange] = useState<TimeRange>("daily");
   const currencySymbol = getCurrencySymbol(baseCurrency);
+  const gradientId = useId().replace(/:/g, "");
 
   const data = useMemo(
     () => aggregateSnapshots(snapshots, range),
@@ -268,7 +269,7 @@ export function NetWorthChart({
 
   if (snapshots.length === 0) {
     return (
-      <Card>
+      <Card className="chart-card">
         <CardHeader>
           <CardTitle>Net Worth Over Time</CardTitle>
         </CardHeader>
@@ -280,18 +281,22 @@ export function NetWorthChart({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Net Worth Over Time</CardTitle>
-        <div className="flex gap-1">
+    <Card className="chart-card">
+      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>Net Worth</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">Your recorded balance over time</p>
+        </div>
+        <div className="inline-flex w-fit rounded-xl border border-border/80 bg-secondary/70 p-1" aria-label="Net worth range">
           {(["daily", "monthly", "yearly"] as const).map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              aria-pressed={range === r}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                 range === r
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-background hover:text-foreground"
               }`}
             >
               {r.charAt(0).toUpperCase() + r.slice(1)}
@@ -300,23 +305,35 @@ export function NetWorthChart({
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <ResponsiveContainer width="100%" height={280}>
+          <AreaChart data={data} margin={{ top: 12, right: 10, left: -12, bottom: 0 }}>
+            <defs>
+              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.22} />
+                <stop offset="95%" stopColor="#2563eb" stopOpacity={0.01} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} stroke="#e8edf4" strokeDasharray="2 5" />
             <XAxis
               dataKey="date"
               className="text-xs"
               interval={0}
               tick={{ fontSize: 10 }}
               tickMargin={5}
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis
               className="text-xs"
+              axisLine={false}
+              tickLine={false}
               tickFormatter={(v) =>
                 `${currencySymbol}${(v / 1000).toFixed(0)}k`
               }
             />
             <Tooltip
+              cursor={{ stroke: "#bfdbfe", strokeWidth: 1 }}
+              contentStyle={{ borderRadius: 12, border: "1px solid #dbe5f0", boxShadow: "0 12px 26px rgba(15,23,42,0.12)" }}
               formatter={(value: number) =>
                 `${currencySymbol}${value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -327,10 +344,11 @@ export function NetWorthChart({
               type="monotone"
               dataKey="total"
               name="Total"
-              stroke="#22c55e"
-              fill="#22c55e"
-              fillOpacity={0.2}
-              strokeWidth={2}
+              stroke="#2563eb"
+              fill={`url(#${gradientId})`}
+              strokeWidth={3}
+              dot={false}
+              activeDot={{ r: 5, fill: "#2563eb", stroke: "#ffffff", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>

@@ -47,7 +47,7 @@ export function AccountTypeMonthlyChart({
 
   if (!hasAnyValue) {
     return (
-      <Card>
+      <Card className="chart-card">
         <CardHeader>
           <CardTitle>Account Totals by Type</CardTitle>
         </CardHeader>
@@ -61,7 +61,7 @@ export function AccountTypeMonthlyChart({
   const symbol = getCurrencySymbol(baseCurrency);
 
   return (
-    <Card>
+    <Card className="chart-card">
       <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle>Account Totals by Type</CardTitle>

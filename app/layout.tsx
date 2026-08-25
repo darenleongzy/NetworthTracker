@@ -41,7 +41,9 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: "/track-my-worth-mark.svg", type: "image/svg+xml" }],
     shortcut: "/track-my-worth-mark.svg",
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  manifest: "/manifest.webmanifest",
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: "/",
