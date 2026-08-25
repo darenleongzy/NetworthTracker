@@ -214,11 +214,10 @@ export function AccountDetail({
       </div>
 
       {account.type === "cpf" ? (
-        <Card className="relative overflow-hidden border-emerald-200/70 bg-[linear-gradient(180deg,rgba(255,252,244,0.98),rgba(246,255,252,0.98)_38%,rgba(243,249,255,0.98))] shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)]">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_45%),radial-gradient(circle_at_top_right,rgba(245,158,11,0.16),transparent_35%),radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_40%)]" />
+        <Card className="account-list-surface overflow-hidden">
           <CardHeader className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-slate-950">CPF Balances & Projections</CardTitle>
+              <CardTitle>CPF Balances & Projections</CardTitle>
               <CardDescription>
                 Track balances, salary-based contributions, and retirement projections.
               </CardDescription>
@@ -264,7 +263,7 @@ export function AccountDetail({
           </CardContent>
         </Card>
       ) : account.type !== "investment" ? (
-        <Card>
+        <Card className="chart-card">
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Cash Holdings</CardTitle>
             <CashHoldingForm accountId={account.id} />
@@ -277,7 +276,7 @@ export function AccountDetail({
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="chart-card">
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Stock Holdings</CardTitle>
@@ -304,7 +303,7 @@ export function AccountDetail({
           snapshots={accountValueSnapshots}
           currency={baseCurrency}
         />
-        <Card>
+        <Card className="chart-card">
           <CardHeader>
             <CardTitle>Change History</CardTitle>
             <CardDescription>
@@ -324,25 +323,25 @@ export function AccountDetail({
                   return (
                     <div
                       key={event.id}
-                      className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm"
+                      className="rounded-2xl border border-border/80 bg-secondary/35 p-4"
                     >
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium text-slate-950">{event.event_label}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="font-medium text-foreground">{event.event_label}</p>
+                        <p className="text-xs text-muted-foreground">
                           {formatAccountHistoryTimestamp(event.created_at)}
                         </p>
                       </div>
                       {detail && detailRows.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-600">{detail}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
                       ) : null}
                       {detailRows.length > 0 ? (
-                        <div className="mt-3 space-y-2 rounded-xl border border-slate-200/70 bg-slate-50/80 p-3">
+                        <div className="mt-3 space-y-2 rounded-xl border border-border/70 bg-background/70 p-3">
                           {detailRows.map((row) => (
                             <div
                               key={`${event.id}-${row.label}`}
                               className="flex flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between"
                             >
-                              <span className="font-medium text-slate-700">{row.label}</span>
+                              <span className="font-medium text-foreground">{row.label}</span>
                               <span className="text-slate-600 sm:text-right">{row.value}</span>
                             </div>
                           ))}

@@ -349,7 +349,7 @@ export function FireCalculator({
       {/* Results Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* FIRE Number */}
-        <div className="rounded-xl bg-gradient-to-br from-orange-500 to-red-500 p-6 text-white shadow-lg shadow-orange-500/25 overflow-hidden">
+        <div className="dashboard-summary-card dashboard-summary-card--investments">
           <div className="flex items-center justify-between pb-2">
             <p className="text-sm font-medium text-white/90">FIRE Number</p>
             <div className="rounded-full bg-white/20 p-2 flex-shrink-0">
@@ -365,7 +365,7 @@ export function FireCalculator({
         </div>
 
         {/* Current Progress */}
-        <div className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 p-6 text-white shadow-lg shadow-purple-500/25 overflow-hidden">
+        <div className="dashboard-summary-card dashboard-summary-card--net-worth">
           <div className="flex items-center justify-between pb-2">
             <p className="text-sm font-medium text-white/90">Current Progress</p>
             <div className="rounded-full bg-white/20 p-2 flex-shrink-0">
@@ -392,10 +392,10 @@ export function FireCalculator({
         </div>
 
         {/* Monthly SWR Income */}
-        <div className={`rounded-xl p-6 text-white shadow-lg overflow-hidden ${
+        <div className={`dashboard-summary-card ${
           fireMetrics.incomeGap >= 0
-            ? "bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/25"
-            : "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/25"
+            ? "dashboard-summary-card--gain"
+            : "dashboard-summary-card--loss"
         }`}>
           <div className="flex items-center justify-between pb-2">
             <p className="text-sm font-medium text-white/90">Monthly SWR Income</p>
@@ -416,7 +416,7 @@ export function FireCalculator({
         </div>
 
         {/* Gap to FIRE */}
-        <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg shadow-blue-500/25 overflow-hidden">
+        <div className="dashboard-summary-card dashboard-summary-card--cash">
           <div className="flex items-center justify-between pb-2">
             <p className="text-sm font-medium text-white/90">Gap to FIRE</p>
             <div className="rounded-full bg-white/20 p-2 flex-shrink-0">
@@ -432,7 +432,7 @@ export function FireCalculator({
         </div>
 
         {/* Years to FIRE */}
-        <div className="rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 p-6 text-white shadow-lg shadow-teal-500/25 overflow-hidden">
+        <div className="dashboard-summary-card dashboard-summary-card--retirement">
           <div className="flex items-center justify-between pb-2">
             <p className="text-sm font-medium text-white/90">Years to FIRE</p>
             <div className="rounded-full bg-white/20 p-2 flex-shrink-0">
@@ -450,7 +450,7 @@ export function FireCalculator({
         </div>
 
         {/* FIRE Age */}
-        <div className="rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 p-6 text-white shadow-lg shadow-pink-500/25 overflow-hidden">
+        <div className="dashboard-summary-card dashboard-summary-card--net-worth">
           <div className="flex items-center justify-between pb-2">
             <p className="text-sm font-medium text-white/90">FIRE Age</p>
             <div className="rounded-full bg-white/20 p-2 flex-shrink-0">
