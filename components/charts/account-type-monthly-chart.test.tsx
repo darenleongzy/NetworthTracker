@@ -42,12 +42,12 @@ describe("AccountTypeMonthlyChart", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Year" })).toHaveClass("bg-background");
+    expect(screen.getByRole("button", { name: "Year" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Week" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Month" })).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Week" }));
 
-    expect(screen.getByRole("button", { name: "Week" })).toHaveClass("bg-background");
+    expect(screen.getByRole("button", { name: "Week" })).toHaveAttribute("aria-pressed", "true");
   });
 });
