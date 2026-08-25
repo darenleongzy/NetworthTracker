@@ -207,7 +207,7 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6">
+    <div className="mx-auto max-w-[1600px] space-y-5">
       <div className="app-page-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Overview</p>
@@ -226,7 +226,7 @@ export default async function DashboardPage() {
         baseCurrency={baseCurrency}
       />
 
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3">
         <div className="min-w-0">
           <NetWorthChart snapshots={snapshots} baseCurrency={baseCurrency} />
         </div>

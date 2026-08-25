@@ -51,7 +51,8 @@ export function AccountHistoryChart({
         <p className="mt-1 text-sm text-muted-foreground">Daily saved value for this account.</p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={272}>
+        <div className="h-[232px] sm:h-[272px]">
+        <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 12, right: 10, left: -12, bottom: 0 }}>
             <defs>
               <linearGradient id="account-history-fill" x1="0" x2="0" y1="0" y2="1">
@@ -60,7 +61,7 @@ export function AccountHistoryChart({
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} stroke="#e8edf4" strokeDasharray="2 5" />
-            <XAxis dataKey="date" className="text-xs" axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" className="text-xs" minTickGap={24} axisLine={false} tickLine={false} />
             <YAxis
               className="text-xs"
               axisLine={false}
@@ -90,6 +91,7 @@ export function AccountHistoryChart({
             />
           </AreaChart>
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

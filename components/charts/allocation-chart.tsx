@@ -70,7 +70,8 @@ export function AllocationChart({
       </CardHeader>
       <CardContent>
         <div className="relative">
-          <ResponsiveContainer width="100%" height={258}>
+          <div className="h-[220px] sm:h-[258px]">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data}
@@ -111,8 +112,9 @@ export function AllocationChart({
               />
             </PieChart>
           </ResponsiveContainer>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border/70 pt-4 text-xs sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border/70 pt-3 text-xs sm:pt-4 sm:grid-cols-4">
           {data.map((entry) => (
             <div className="flex min-w-0 items-center gap-2" key={entry.name}>
               <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: COLORS[entry.name] }} />

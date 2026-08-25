@@ -17,6 +17,17 @@ const geistMono = Geist_Mono({
 
 const siteUrl = "https://trackmyworth.xyz";
 const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+const themeInitializer = `(() => {
+  try {
+    const savedTheme = localStorage.getItem("track-my-worth-theme");
+    const theme = savedTheme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = "dark";
+    document.documentElement.style.colorScheme = "dark";
+  }
+})();`;
 
 export const metadata: Metadata = {
   title: {
@@ -91,8 +102,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitializer }} />
         {adsenseClient?.startsWith("ca-pub-") && (
           <script
             async

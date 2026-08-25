@@ -56,7 +56,7 @@ export default async function ExpensesPage() {
   ] as const;
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6">
+    <div className="mx-auto max-w-[1600px] space-y-5">
       <div className="app-page-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Spending</p>
@@ -86,7 +86,7 @@ export default async function ExpensesPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <div className="min-w-0">
           <ExpenseBreakdownChart
             expenses={currentMonthExpenses}

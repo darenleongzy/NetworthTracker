@@ -47,7 +47,7 @@ const ACCOUNT_CATEGORIES: AccountCategory[] = [
     icon: ArrowUpRight,
     types: ["investment"],
     emptyMessage: "No brokerage accounts yet.",
-    badgeTone: "bg-sky-100 text-sky-900",
+    badgeTone: "bg-primary/15 text-primary",
   },
   {
     key: "cash",
@@ -55,7 +55,7 @@ const ACCOUNT_CATEGORIES: AccountCategory[] = [
     icon: Wallet,
     types: ["cash"],
     emptyMessage: "No cash accounts yet.",
-    badgeTone: "bg-slate-100 text-slate-900",
+    badgeTone: "bg-secondary text-secondary-foreground",
   },
   {
     key: "retirement",
@@ -63,7 +63,7 @@ const ACCOUNT_CATEGORIES: AccountCategory[] = [
     icon: ShieldCheck,
     types: ["cpf", "srs"],
     emptyMessage: "No CPF or SRS accounts yet.",
-    badgeTone: "bg-emerald-100 text-emerald-900",
+    badgeTone: "bg-chart-5/15 text-chart-5",
   },
 ];
 
@@ -172,7 +172,7 @@ export function AccountList({
 
   if (accounts.length === 0) {
     return (
-      <Card className="border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(248,250,252,0.94))] shadow-sm">
+      <Card className="border-border/80 bg-card shadow-sm">
         <CardContent className="py-10 text-center text-muted-foreground">
           No accounts yet. Create one to get started.
         </CardContent>
@@ -181,11 +181,11 @@ export function AccountList({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <Card className="accounts-overview text-white">
         <CardHeader className="relative">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_18%,rgba(125,211,252,0.14),transparent_26%),radial-gradient(circle_at_82%_22%,rgba(94,234,212,0.1),transparent_30%),radial-gradient(circle_at_92%_100%,rgba(45,212,191,0.14),transparent_34%)]" />
-          <div className="relative flex flex-col gap-6">
+          <div className="relative flex flex-col gap-4">
             <div className="space-y-2">
               <CardDescription className="text-white/75">
                 Total across all accounts ({baseCurrency})
@@ -226,18 +226,18 @@ export function AccountList({
                 className="account-category-tab min-w-0 whitespace-normal px-2 py-3 transition-all hover:-translate-y-0.5 sm:px-3 sm:py-3 md:px-5 md:py-4"
               >
                 <div className="flex w-full flex-col items-center gap-2 text-center sm:items-start sm:text-left">
-                  <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-black/5 sm:p-2.5">
+                  <div className="rounded-2xl bg-background/90 p-2 shadow-sm ring-1 ring-border/70 sm:p-2.5">
                       <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   </div>
                   <div className="min-w-0 w-full">
-                    <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-slate-950 sm:text-xs md:text-base">
+                    <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-foreground sm:text-xs md:text-base">
                         {category.title}
                     </p>
                     <div className="mt-2 flex flex-col items-center gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-700 shadow-sm sm:px-2.5 md:px-3 md:py-1.5 md:text-xs">
+                      <span className="rounded-full bg-secondary px-2 py-1 text-[10px] font-medium text-secondary-foreground shadow-sm sm:px-2.5 md:px-3 md:py-1.5 md:text-xs">
                       {items.length} {items.length === 1 ? "acct" : "accts"}
                       </span>
-                      <span className="max-w-full rounded-full bg-slate-950 px-2 py-1 text-[10px] font-semibold text-white shadow-sm sm:px-2.5 md:px-3 md:py-1.5 md:text-xs">
+                      <span className="max-w-full rounded-full bg-foreground px-2 py-1 text-[10px] font-semibold text-background shadow-sm sm:px-2.5 md:px-3 md:py-1.5 md:text-xs">
                       {formatCurrency(total, baseCurrency)}
                       </span>
                     </div>
@@ -252,16 +252,16 @@ export function AccountList({
           <TabsContent
             key={category.key}
             value={category.key}
-            className="account-list-surface mt-4 p-4 outline-none sm:mt-5 sm:p-5 lg:mt-6 lg:p-6"
+            className="account-list-surface mt-3 p-3 outline-none sm:mt-4 sm:p-4 lg:p-5"
           >
             {items.length === 0 ? (
-              <Card className="border-dashed border-slate-200/80 bg-white/80 shadow-sm">
+              <Card className="border-dashed border-border/80 bg-card/80 shadow-sm">
                 <CardContent className="py-10 text-center text-muted-foreground">
                   {category.emptyMessage}
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-5 xl:grid-cols-2">
+              <div className="grid gap-4 xl:grid-cols-2">
                 {items.map((account) => {
                   const accountTotal = accountTotals.get(account.id) ?? 0;
                   const detailLabel =

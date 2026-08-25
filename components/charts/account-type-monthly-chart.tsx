@@ -91,7 +91,8 @@ export function AccountTypeMonthlyChart({
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={272}>
+        <div className="h-[232px] sm:h-[272px]">
+        <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 12, right: 10, left: -12, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="#e8edf4" strokeDasharray="2 5" />
             <XAxis dataKey="label" className="text-xs" minTickGap={24} axisLine={false} tickLine={false} />
@@ -127,7 +128,8 @@ export function AccountTypeMonthlyChart({
             ))}
           </LineChart>
         </ResponsiveContainer>
-        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/70 pt-4 text-xs sm:grid-cols-4">
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/70 pt-3 text-xs sm:mt-4 sm:pt-4 sm:grid-cols-4">
           {SERIES.map((series) => {
             const value = latestRow?.[series.key];
             return (

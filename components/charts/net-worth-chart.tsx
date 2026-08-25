@@ -159,7 +159,7 @@ function getLast12Months(snapshots: NetWorthSnapshot[]) {
     }
 
     result.push({
-      date: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+      date: d.toLocaleDateString("en-US", { month: "short" }),
       ...lastValue,
     });
   }
@@ -305,8 +305,9 @@ export function NetWorthChart({
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={data} margin={{ top: 12, right: 10, left: -12, bottom: 0 }}>
+        <div className="h-[224px] sm:h-[280px]">
+          <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 8, right: 6, left: -12, bottom: 0 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="5%" stopColor="#2563eb" stopOpacity={0.22} />
@@ -317,9 +318,10 @@ export function NetWorthChart({
             <XAxis
               dataKey="date"
               className="text-xs"
-              interval={0}
-              tick={{ fontSize: 10 }}
-              tickMargin={5}
+              interval={range === "monthly" ? 1 : "preserveStartEnd"}
+              minTickGap={18}
+              tick={{ fontSize: 11 }}
+              tickMargin={8}
               axisLine={false}
               tickLine={false}
             />
@@ -351,7 +353,8 @@ export function NetWorthChart({
               activeDot={{ r: 5, fill: "#2563eb", stroke: "#ffffff", strokeWidth: 2 }}
             />
           </AreaChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

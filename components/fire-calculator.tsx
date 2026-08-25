@@ -176,13 +176,13 @@ export function FireCalculator({
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Settings Card */}
       <Card>
         <CardHeader>
           <CardTitle>Settings</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-5">
           {/* Current Age */}
           <div className="space-y-2">
             <Label htmlFor="age">Current Age</Label>

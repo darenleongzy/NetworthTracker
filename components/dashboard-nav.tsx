@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -19,7 +19,8 @@ import {
   FileText,
   ScrollText,
   Trash2,
-  Palette,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,13 +33,35 @@ const navItems = [
 
 const adminNavItem = { href: "/dashboard/admin", label: "Admin", icon: Shield };
 
+type Theme = "light" | "dark";
+
+const THEME_CHANGE_EVENT = "track-my-worth-theme-change";
+
+function getThemeSnapshot(): Theme {
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+function getServerThemeSnapshot(): Theme {
+  return "dark";
+}
+
+function subscribeToTheme(onStoreChange: () => void) {
+  window.addEventListener(THEME_CHANGE_EVENT, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(THEME_CHANGE_EVENT, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
 function NavContent({
   userEmail,
   pathname,
   onSignOut,
   onNavigate,
-  uiPalette,
-  onPaletteChange,
+  theme,
+  onThemeChange,
   isDarkSidebar = false,
   isAdmin = false,
 }: {
@@ -46,8 +69,8 @@ function NavContent({
   pathname: string;
   onSignOut: () => void;
   onNavigate?: () => void;
-  uiPalette: "classic" | "refined";
-  onPaletteChange: (palette: "classic" | "refined") => void;
+  theme: Theme;
+  onThemeChange: (theme: Theme) => void;
   isDarkSidebar?: boolean;
   isAdmin?: boolean;
 }) {
@@ -90,21 +113,25 @@ function NavContent({
           )}
         >
           <div className="mb-2 flex items-center gap-2">
-            <Palette className="h-3.5 w-3.5 text-sidebar-primary" />
+            {theme === "dark" ? (
+              <Moon className="h-3.5 w-3.5 text-sidebar-primary" />
+            ) : (
+              <Sun className="h-3.5 w-3.5 text-sidebar-primary" />
+            )}
             <span className={cn("text-xs font-semibold", isDarkSidebar ? "text-sidebar-foreground" : "text-foreground")}>
-              UI color preview
+              Appearance
             </span>
           </div>
-          <div className="grid grid-cols-2 rounded-lg bg-black/10 p-0.5" aria-label="UI color palette">
-            {(["classic", "refined"] as const).map((palette) => (
+          <div className="grid grid-cols-2 rounded-lg bg-black/10 p-0.5" aria-label="Color theme">
+            {(["light", "dark"] as const).map((option) => (
               <button
-                key={palette}
+                key={option}
                 type="button"
-                aria-pressed={uiPalette === palette}
-                onClick={() => onPaletteChange(palette)}
+                aria-pressed={theme === option}
+                onClick={() => onThemeChange(option)}
                 className={cn(
-                  "rounded-md px-2 py-1.5 text-xs font-semibold capitalize transition-all",
-                  uiPalette === palette
+                  "flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-semibold capitalize transition-all",
+                  theme === option
                     ? isDarkSidebar
                       ? "bg-sidebar text-sidebar-foreground shadow-sm"
                       : "bg-background text-foreground shadow-sm"
@@ -113,7 +140,8 @@ function NavContent({
                       : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {palette === "classic" ? "Current" : "New"}
+                {option === "light" ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
+                {option}
               </button>
             ))}
           </div>
@@ -196,11 +224,13 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
   const router = useRouter();
   const supabase = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [uiPalette, setUiPalette] = useState<"classic" | "refined">("refined");
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
 
-  function handlePaletteChange(palette: "classic" | "refined") {
-    setUiPalette(palette);
-    document.documentElement.dataset.uiPalette = palette;
+  function handleThemeChange(nextTheme: Theme) {
+    document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.style.colorScheme = nextTheme;
+    window.localStorage.setItem("track-my-worth-theme", nextTheme);
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }
 
   async function handleSignOut() {
@@ -228,8 +258,8 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
               pathname={pathname}
               onSignOut={handleSignOut}
               onNavigate={() => setMobileOpen(false)}
-              uiPalette={uiPalette}
-              onPaletteChange={handlePaletteChange}
+              theme={theme}
+              onThemeChange={handleThemeChange}
               isAdmin={isAdmin}
             />
           </SheetContent>
@@ -247,8 +277,8 @@ export function DashboardNav({ userEmail, isAdmin = false }: { userEmail: string
           userEmail={userEmail}
           pathname={pathname}
           onSignOut={handleSignOut}
-          uiPalette={uiPalette}
-          onPaletteChange={handlePaletteChange}
+          theme={theme}
+          onThemeChange={handleThemeChange}
           isDarkSidebar
           isAdmin={isAdmin}
         />
