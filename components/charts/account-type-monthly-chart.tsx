@@ -47,7 +47,7 @@ export function AccountTypeMonthlyChart({
 
   if (!hasAnyValue) {
     return (
-      <Card>
+      <Card className="chart-card">
         <CardHeader>
           <CardTitle>Account Totals by Type</CardTitle>
         </CardHeader>
@@ -61,7 +61,7 @@ export function AccountTypeMonthlyChart({
   const symbol = getCurrencySymbol(baseCurrency);
 
   return (
-    <Card>
+    <Card className="chart-card">
       <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle>Account Totals by Type</CardTitle>
@@ -71,17 +71,18 @@ export function AccountTypeMonthlyChart({
         </div>
         <div
           aria-label="Account history range"
-          className="inline-flex w-fit rounded-lg border bg-muted/50 p-1"
+          className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-100/80 p-1 shadow-inner"
         >
           {RANGE_OPTIONS.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => setRange(option.value)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              aria-pressed={range === option.value}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
                 range === option.value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                  : "text-slate-500 hover:bg-white hover:text-slate-950"
               }`}
             >
               {option.label}

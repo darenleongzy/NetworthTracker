@@ -82,6 +82,63 @@
   --sidebar-ring: oklch(0.55 0.25 285);
 }
 
+html[data-ui-palette="refined"] {
+  --background: oklch(0.975 0.008 230);
+  --foreground: oklch(0.22 0.025 250);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.52 0.16 250);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.955 0.012 230);
+  --secondary-foreground: oklch(0.25 0.025 250);
+  --muted: oklch(0.95 0.012 230);
+  --muted-foreground: oklch(0.5 0.025 250);
+  --accent: oklch(0.94 0.028 210);
+  --accent-foreground: oklch(0.25 0.04 235);
+  --border: oklch(0.89 0.018 230);
+  --input: oklch(0.9 0.018 230);
+  --ring: oklch(0.52 0.16 250);
+  --chart-1: oklch(0.52 0.16 250);
+  --chart-2: oklch(0.58 0.14 185);
+  --chart-3: oklch(0.67 0.13 80);
+  --chart-4: oklch(0.6 0.16 310);
+  --chart-5: oklch(0.58 0.13 150);
+  --sidebar: oklch(0.22 0.035 250);
+  --sidebar-foreground: oklch(0.96 0.008 230);
+  --sidebar-primary: oklch(0.68 0.14 190);
+  --sidebar-primary-foreground: oklch(0.2 0.035 250);
+  --sidebar-accent: oklch(0.29 0.04 250);
+  --sidebar-accent-foreground: oklch(0.98 0.005 230);
+  --sidebar-border: oklch(0.35 0.035 250);
+  --sidebar-ring: oklch(0.68 0.14 190);
+}
+
+.dashboard-summary-card {
+  overflow: hidden;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  color: white;
+  box-shadow: 0 12px 24px rgb(15 23 42 / 12%);
+}
+
+.dashboard-summary-card--net-worth { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.dashboard-summary-card--cash { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.dashboard-summary-card--investments { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.dashboard-summary-card--retirement { background: linear-gradient(135deg, #14b8a6, #0891b2); }
+.dashboard-summary-card--gain { background: linear-gradient(135deg, #10b981, #16a34a); }
+.dashboard-summary-card--loss { background: linear-gradient(135deg, #f43f5e, #dc2626); }
+
+html[data-ui-palette="refined"] .dashboard-summary-card {
+  border: 1px solid rgb(255 255 255 / 14%);
+  box-shadow: 0 14px 28px rgb(15 23 42 / 14%);
+}
+
+html[data-ui-palette="refined"] .dashboard-summary-card--net-worth { background: linear-gradient(135deg, #19345b, #315d91); }
+html[data-ui-palette="refined"] .dashboard-summary-card--cash { background: linear-gradient(135deg, #175d8e, #1786a3); }
+html[data-ui-palette="refined"] .dashboard-summary-card--investments { background: linear-gradient(135deg, #8d5f22, #bd8131); }
+html[data-ui-palette="refined"] .dashboard-summary-card--retirement { background: linear-gradient(135deg, #167667, #279180); }
+html[data-ui-palette="refined"] .dashboard-summary-card--gain { background: linear-gradient(135deg, #197052, #278760); }
+html[data-ui-palette="refined"] .dashboard-summary-card--loss { background: linear-gradient(135deg, #a7444d, #c55756); }
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -124,5 +181,84 @@
   body {
     @apply bg-background text-foreground;
     @apply bg-background text-foreground;
+  }
+}
+
+.app-workspace {
+  background:
+    radial-gradient(circle at 100% 0%, rgb(45 108 223 / 7%), transparent 26rem),
+    linear-gradient(180deg, #f8fafc 0%, var(--background) 24rem);
+}
+
+.app-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.app-page-title {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.app-page-subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--muted-foreground);
+}
+
+.chart-card {
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--border) 82%, white);
+  border-radius: 1.25rem;
+  background: color-mix(in oklch, var(--card) 96%, #eff6ff);
+  box-shadow: 0 14px 30px rgb(15 23 42 / 5%);
+}
+
+.chart-card > [data-slot="card-header"] {
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.chart-card > [data-slot="card-content"] {
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+
+.accounts-overview {
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(circle at 88% 22%, rgb(83 211 183 / 28%), transparent 22rem),
+    linear-gradient(125deg, #12213c 0%, #19365b 56%, #235d79 100%);
+  box-shadow: 0 24px 52px rgb(15 23 42 / 18%);
+}
+
+.account-category-tab {
+  border: 1px solid color-mix(in oklch, var(--border) 86%, white);
+  border-radius: 1rem;
+  background: color-mix(in oklch, var(--card) 94%, #f1f5f9);
+  box-shadow: 0 8px 18px rgb(15 23 42 / 4%);
+}
+
+.account-category-tab[data-state="active"] {
+  border-color: color-mix(in oklch, var(--primary) 32%, white);
+  background: color-mix(in oklch, var(--primary) 8%, white);
+  box-shadow: 0 12px 24px rgb(45 108 223 / 12%);
+}
+
+.account-list-surface {
+  border: 1px solid color-mix(in oklch, var(--border) 88%, white);
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 72%);
+  box-shadow: 0 16px 32px rgb(15 23 42 / 4%);
+}
+
+@media (min-width: 640px) {
+  .app-page-header {
+    flex-direction: row;
+    align-items: end;
+    justify-content: space-between;
   }
 }
