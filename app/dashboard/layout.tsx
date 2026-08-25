@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CoupleInviteNotifier } from "@/components/couple-invite-notifier";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { NavProgress } from "@/components/nav-progress";
 
@@ -19,6 +20,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-background">
       <NavProgress />
+      <CoupleInviteNotifier />
       <Suspense fallback={<DashboardNav userEmail="" />}>
         <DashboardNavigation />
       </Suspense>

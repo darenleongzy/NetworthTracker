@@ -14,6 +14,7 @@ import {
   Menu,
   Receipt,
   Flame,
+  Heart,
   Shield,
   Coffee,
   FileText,
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/dashboard/accounts", label: "Accounts", icon: Wallet },
   { href: "/dashboard/expenses", label: "Expenses", icon: Receipt },
   { href: "/dashboard/fire", label: "FIRE", icon: Flame },
+  { href: "/dashboard/couple", label: "Couple", icon: Heart },
 ];
 
 const adminNavItem = { href: "/dashboard/admin", label: "Admin", icon: Shield };
