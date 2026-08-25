@@ -1,3 +1,4 @@
+import { SITE_URL, SUPPORT_EMAIL, SUPPORT_MAILTO } from "@track-my-worth/config";
 import { SUPPORTED_CURRENCIES } from "@track-my-worth/domain";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
@@ -7,23 +8,22 @@ import { SectionCard } from "@/src/components/section-card";
 import { useAsyncResource } from "@/src/hooks/use-async-resource";
 import { mobileApi } from "@/src/lib/api";
 import { useSession } from "@/src/providers/session-provider";
-import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
 
 const LEGAL_LINKS = [
   {
     label: "Privacy Policy",
     subtitle: "How Track My Worth collects, uses, and protects data",
-    url: "https://trackmyworth.xyz/privacy",
+    url: `${SITE_URL}/privacy`,
   },
   {
     label: "Terms of Service",
     subtitle: "The terms that govern the web and mobile apps",
-    url: "https://trackmyworth.xyz/terms",
+    url: `${SITE_URL}/terms`,
   },
   {
     label: "Delete account or data",
     subtitle: "Instructions for account deletion and data deletion requests",
-    url: "https://trackmyworth.xyz/delete-account",
+    url: `${SITE_URL}/delete-account`,
   },
 ];
 

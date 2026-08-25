@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
   BarChart3,
@@ -63,7 +64,7 @@ export default function FeaturesPage() {
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 font-bold">
-            <TrendingUp className="h-5 w-5" />
+            <Image src="/track-my-worth-mark.svg" alt="" width={24} height={24} priority />
             Track My Worth
           </Link>
           <div className="flex items-center gap-2">

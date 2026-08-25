@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export function LegalPage({
@@ -16,8 +17,9 @@ export function LegalPage({
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-bold tracking-tight">
-            Track My Worth
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <Image src="/track-my-worth-mark.svg" alt="" width={24} height={24} priority />
+            <span>Track My Worth</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link href="/privacy">

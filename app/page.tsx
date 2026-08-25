@@ -24,7 +24,7 @@ export default function LandingPage() {
       <SoftwareApplicationSchema />
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-6 w-6" />
+          <Image src="/track-my-worth-mark.svg" alt="" width={28} height={28} priority />
           <span className="text-xl font-bold">Track My Worth</span>
         </div>
         <div className="flex items-center gap-2">

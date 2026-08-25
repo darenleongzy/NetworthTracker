@@ -4,6 +4,7 @@
     "slug": "track-my-worth",
     "scheme": "trackmyworth",
     "version": "1.0.0",
+    "icon": "./assets/track-my-worth-icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "plugins": [
