@@ -285,9 +285,9 @@ function ConnectedCoupleDashboard({
 
       <Card className="border-border/80 bg-card shadow-sm">
         <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-base font-semibold">Contribution split</p><p className="text-sm text-muted-foreground">How each partner contributes to your combined assets.</p></div><p className="text-sm font-medium text-muted-foreground">{Math.round(contributionPercentages.first)}% / {Math.round(contributionPercentages.second)}%</p></div>
-          <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-primary transition-[width] duration-500" style={{ width: `${contributionPercentages.first}%` }} /><div className="h-full bg-teal-400 transition-[width] duration-500" style={{ width: `${contributionPercentages.second}%` }} /></div>
-          <div className="mt-3 grid grid-cols-2 gap-4 text-sm"><div><p className="text-muted-foreground">You</p><p className="mt-1 font-semibold">{formatCurrency(ownTotal, baseCurrency)}</p></div><div className="text-right"><p className="truncate text-muted-foreground" title={partnerEmail}>{partnerEmail}</p><p className="mt-1 font-semibold">{formatCurrency(partnerTotal, baseCurrency)}</p></div></div>
+          <div><p className="text-base font-semibold">You vs Them</p><p className="text-sm text-muted-foreground">Your share of the combined assets.</p></div>
+          <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-violet-500 transition-[width] duration-500" style={{ width: `${contributionPercentages.first}%` }} /><div className="h-full bg-sky-400 transition-[width] duration-500" style={{ width: `${contributionPercentages.second}%` }} /></div>
+          <div className="mt-3 grid grid-cols-2 gap-4 text-sm"><div><p className="font-medium text-violet-500">You · {contributionPercentages.first.toFixed(1)}%</p><p className="mt-1 font-semibold">{formatCurrency(ownTotal, baseCurrency)}</p></div><div className="text-right"><p className="font-medium text-sky-500">Them · {contributionPercentages.second.toFixed(1)}%</p><p className="mt-1 font-semibold">{formatCurrency(partnerTotal, baseCurrency)}</p></div></div>
         </CardContent>
       </Card>
 
@@ -300,8 +300,8 @@ function ConnectedCoupleDashboard({
               <div className="flex items-center justify-between"><span className={`rounded-xl ${tint} p-2 ${text}`}><Icon className="h-4 w-4" /></span><span className="text-xs text-muted-foreground">{allAssets > 0 ? Math.round((value / allAssets) * 100) : 0}%</span></div>
               <p className="mt-4 text-sm text-muted-foreground">{label}</p>
               <p className="mt-1 text-xl font-semibold tracking-tight">{formatCurrency(value, baseCurrency)}</p>
-              <div className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-primary" style={{ width: `${ownerPercentages.first}%` }} /><div className="h-full bg-teal-400" style={{ width: `${ownerPercentages.second}%` }} /></div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs"><span className="text-muted-foreground">You <b className="font-medium text-foreground">{formatCurrency(ownValue, baseCurrency)}</b></span><span className="truncate text-right text-muted-foreground" title={partnerEmail}>{partnerEmail} <b className="font-medium text-foreground">{formatCurrency(partnerValue, baseCurrency)}</b></span></div>
+              <div className="mt-4 flex h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-violet-500" style={{ width: `${ownerPercentages.first}%` }} /><div className="h-full bg-sky-400" style={{ width: `${ownerPercentages.second}%` }} /></div>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-xs"><div className="min-w-0"><p className="font-medium text-violet-500">You · {ownerPercentages.first.toFixed(0)}%</p><p className="mt-1 break-all font-medium text-foreground">{formatCurrency(ownValue, baseCurrency)}</p></div><div className="min-w-0 text-right"><p className="font-medium text-sky-500">Them · {ownerPercentages.second.toFixed(0)}%</p><p className="mt-1 break-all font-medium text-foreground">{formatCurrency(partnerValue, baseCurrency)}</p></div></div>
             </CardContent>
           </Card>
           );
