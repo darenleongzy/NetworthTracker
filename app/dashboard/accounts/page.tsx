@@ -9,11 +9,15 @@ import type { AccountWithHoldings } from "@/lib/types";
 
 export default async function AccountsPage() {
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+  if (!userId) return null;
 
   const [{ data: accounts }, preferencesRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
+      .eq("user_id", userId)
       .order("created_at", { ascending: true }),
     supabase.from("user_preferences").select("base_currency").maybeSingle(),
   ]);

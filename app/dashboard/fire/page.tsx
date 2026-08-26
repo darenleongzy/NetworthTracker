@@ -12,6 +12,9 @@ import { DEFAULT_FIRE_SETTINGS, type Account, type CashHolding, type StockHoldin
 
 export default async function FirePage() {
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+  if (!userId) return null;
 
   // Calculate date range for last 3 months of expenses
   const now = new Date();
@@ -23,10 +26,12 @@ export default async function FirePage() {
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
+      .eq("user_id", userId)
       .order("created_at"),
     supabase
       .from("expenses")
       .select("*")
+      .eq("user_id", userId)
       .gte("expense_date", threeMonthsAgoStr)
       .order("expense_date", { ascending: false }),
     supabase

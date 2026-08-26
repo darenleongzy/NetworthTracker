@@ -14,10 +14,14 @@ function formatExpenseAmount(value: number) {
 
 export default async function ExpensesPage() {
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+  if (!userId) return null;
 
   const { data: expenses } = await supabase
     .from("expenses")
     .select("*")
+    .eq("user_id", userId)
     .order("expense_date", { ascending: false });
 
   const typedExpenses = (expenses as Expense[]) ?? [];
