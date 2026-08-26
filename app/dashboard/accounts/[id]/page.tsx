@@ -19,12 +19,16 @@ export default async function AccountDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+  if (!userId) notFound();
 
   const [{ data: account }, preferencesRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
       .eq("id", id)
+      .eq("user_id", userId)
       .single(),
     supabase.from("user_preferences").select("base_currency").maybeSingle(),
   ]);

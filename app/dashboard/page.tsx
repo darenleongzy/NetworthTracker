@@ -34,26 +34,33 @@ import type {
 export default async function DashboardPage() {
   const pageStartedAt = Date.now();
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+  if (!userId) return null;
 
   // Fetch all user data in parallel
   const [accountsRes, snapshotsRes, expensesRes, preferencesRes, accountSnapshotsRes] = await Promise.all([
     supabase
       .from("accounts")
       .select("*, cash_holdings(*), stock_holdings(*)")
+      .eq("user_id", userId)
       .order("created_at"),
     supabase
       .from("net_worth_snapshots")
       .select("*")
+      .eq("user_id", userId)
       .order("snapshot_date", { ascending: true })
       .limit(90),
     supabase
       .from("expenses")
       .select("*")
+      .eq("user_id", userId)
       .order("expense_date", { ascending: false }),
     supabase.from("user_preferences").select("base_currency").maybeSingle(),
     supabase
       .from("account_value_snapshots")
       .select("*")
+      .eq("user_id", userId)
       .order("snapshot_date", { ascending: true }),
   ]);
 

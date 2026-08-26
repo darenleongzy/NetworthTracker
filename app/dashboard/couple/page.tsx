@@ -34,11 +34,21 @@ export default async function CouplePage() {
   let partnerBreakdown = emptyBreakdown;
 
   if (typedConnection?.status === "connected") {
-    const { data: accounts } = await supabase
-      .from("accounts")
-      .select("*, cash_holdings(*), stock_holdings(*)")
-      .order("created_at", { ascending: true });
-    const typedAccounts = (accounts ?? []) as AccountWithHoldings[];
+    const [{ data: ownAccounts }, { data: partnerAccounts, error: partnerAccountsError }] = await Promise.all([
+      supabase
+        .from("accounts")
+        .select("*, cash_holdings(*), stock_holdings(*)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true }),
+      supabase.rpc("get_connected_partner_account_data"),
+    ]);
+    if (partnerAccountsError) {
+      console.error("Unable to load connected partner accounts", partnerAccountsError.message);
+    }
+    const typedAccounts = [
+      ...((ownAccounts ?? []) as AccountWithHoldings[]),
+      ...((Array.isArray(partnerAccounts) ? partnerAccounts : []) as AccountWithHoldings[]),
+    ];
     const tickers = typedAccounts.flatMap((account) => account.stock_holdings.map((holding) => holding.ticker));
     const [exchangeRates, stockPrices] = await Promise.all([
       getExchangeRates(baseCurrency),
