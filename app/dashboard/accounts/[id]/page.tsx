@@ -1,14 +1,17 @@
 export const dynamic = "force-dynamic";
 
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   getAccountHistoryEvents,
   getAccountValueSnapshots,
   getCpfAccountSettings,
+  saveAccountSnapshots,
 } from "@/lib/actions";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { getStockPrices } from "@/lib/stock-api";
+import { calculateAccountTotalValue } from "@/lib/account-history";
 import { AccountDetail } from "@/components/account-detail";
 import type { AccountHistoryEvent, AccountValueSnapshot, AccountWithHoldings } from "@/lib/types";
 
@@ -50,16 +53,47 @@ export default async function AccountDetailPage({
     getExchangeRates(baseCurrency),
     tickers.length > 0 ? getStockPrices(tickers) : Promise.resolve({}),
   ]);
+  const accountWithHoldings = account as AccountWithHoldings;
+  const today = new Date().toISOString().split("T")[0];
+  const currentSnapshot: AccountValueSnapshot = {
+    id: `current-${account.id}`,
+    account_id: account.id,
+    user_id: userId,
+    account_type: account.type,
+    total_value: calculateAccountTotalValue(
+      accountWithHoldings,
+      baseCurrency,
+      exchangeRates,
+      stockPrices
+    ),
+    currency: baseCurrency,
+    snapshot_date: today,
+    created_at: new Date().toISOString(),
+  };
+  const snapshotsWithCurrentValue = [
+    ...accountValueSnapshots.filter((snapshot) => snapshot.snapshot_date !== today),
+    currentSnapshot,
+  ];
+
+  // A visit makes the latest valuation immediately visible, then persists it
+  // without delaying the account detail response.
+  after(async () => {
+    try {
+      await saveAccountSnapshots([accountWithHoldings], baseCurrency, exchangeRates, stockPrices);
+    } catch (error) {
+      console.error("Failed to save account detail snapshot", error);
+    }
+  });
 
   return (
     <AccountDetail
-      account={account as AccountWithHoldings}
+      account={accountWithHoldings}
       baseCurrency={baseCurrency}
       exchangeRates={exchangeRates}
       stockPrices={stockPrices}
       cpfSettings={cpfSettings}
       accountHistoryEvents={accountHistoryEvents as AccountHistoryEvent[]}
-      accountValueSnapshots={accountValueSnapshots as AccountValueSnapshot[]}
+      accountValueSnapshots={snapshotsWithCurrentValue}
     />
   );
 }

@@ -1,22 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { StockPriceData } from "./stock-api";
+import { isStockPriceStale, STOCK_PRICE_CACHE_TTL_MS, type StockPriceData } from "./stock-api";
 
-// Mock Supabase
-const mockSupabaseClient = {
-  from: vi.fn(),
-};
+const { mockSupabaseClient, mockYahooFinance } = vi.hoisted(() => ({
+  mockSupabaseClient: { from: vi.fn() },
+  mockYahooFinance: { quoteCombine: vi.fn() },
+}));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
 }));
 
-// Mock Yahoo Finance
-const mockYahooFinance = {
-  quoteCombine: vi.fn(),
-};
-
 vi.mock("yahoo-finance2", () => ({
-  default: vi.fn(() => mockYahooFinance),
+  default: class YahooFinanceMock {
+    constructor() {
+      return mockYahooFinance;
+    }
+  },
 }));
 
 describe("stock-api", () => {
@@ -90,24 +89,24 @@ describe("stock-api", () => {
   });
 
   describe("cache TTL logic", () => {
-    const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
     it("identifies fresh cache correctly", () => {
-      const freshTimestamp = new Date();
-      const age = Date.now() - freshTimestamp.getTime();
-      expect(age < CACHE_TTL_MS).toBe(true);
+      expect(isStockPriceStale(new Date().toISOString())).toBe(false);
     });
 
     it("identifies stale cache correctly", () => {
-      const staleTimestamp = new Date(Date.now() - CACHE_TTL_MS - 1000);
-      const age = Date.now() - staleTimestamp.getTime();
-      expect(age >= CACHE_TTL_MS).toBe(true);
+      expect(
+        isStockPriceStale(new Date(Date.now() - STOCK_PRICE_CACHE_TTL_MS - 1).toISOString())
+      ).toBe(true);
     });
 
     it("edge case: exactly at TTL boundary", () => {
-      const boundaryTimestamp = new Date(Date.now() - CACHE_TTL_MS);
-      const age = Date.now() - boundaryTimestamp.getTime();
-      expect(age >= CACHE_TTL_MS).toBe(true);
+      expect(
+        isStockPriceStale(new Date(Date.now() - STOCK_PRICE_CACHE_TTL_MS).toISOString())
+      ).toBe(true);
+    });
+
+    it("treats an invalid cache timestamp as stale", () => {
+      expect(isStockPriceStale("not-a-date")).toBe(true);
     });
   });
 
