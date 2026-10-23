@@ -1,12 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import YahooFinance from "yahoo-finance2";
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+// Keep valuations timely during market hours without issuing a quote request on
+// every page view. Yahoo Finance can still provide delayed exchange data.
+export const STOCK_PRICE_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 // Create a singleton instance of YahooFinance
 const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 export type StockPriceData = { price: number; currency: string };
+
+export function isStockPriceStale(fetchedAt: string, now = Date.now()) {
+  const fetchedAtMs = new Date(fetchedAt).getTime();
+  return Number.isNaN(fetchedAtMs) || now - fetchedAtMs >= STOCK_PRICE_CACHE_TTL_MS;
+}
 
 export async function getStockPrice(ticker: string): Promise<StockPriceData | null> {
   const supabase = await createClient();
@@ -20,8 +27,7 @@ export async function getStockPrice(ticker: string): Promise<StockPriceData | nu
     .single();
 
   if (cached) {
-    const age = Date.now() - new Date(cached.fetched_at).getTime();
-    if (age < CACHE_TTL_MS) {
+    if (!isStockPriceStale(cached.fetched_at)) {
       return { price: cached.price, currency: cached.currency ?? "USD" };
     }
   }
@@ -57,7 +63,7 @@ export async function getStockPrice(ticker: string): Promise<StockPriceData | nu
 }
 
 /**
- * Refresh stock price if cache is stale (older than 24 hours)
+ * Refresh stock price if cache is stale (older than 15 minutes)
  * Returns the refreshed price data or null if fetch failed
  */
 export async function refreshStockPriceIfStale(
@@ -73,9 +79,7 @@ export async function refreshStockPriceIfStale(
     .eq("ticker", upperTicker)
     .single();
 
-  const isStale =
-    !cached ||
-    Date.now() - new Date(cached.fetched_at).getTime() >= CACHE_TTL_MS;
+  const isStale = !cached || isStockPriceStale(cached.fetched_at);
 
   if (!isStale) {
     return cached ? { price: cached.price, currency: cached.currency ?? "USD" } : null;
@@ -136,8 +140,7 @@ export async function getStockPrices(
     const cached = cachedPrices?.find((p) => p.ticker === t);
     if (cached) {
       prices[t] = { price: cached.price, currency: cached.currency ?? "USD" };
-      const age = Date.now() - new Date(cached.fetched_at).getTime();
-      if (age >= CACHE_TTL_MS) stale.push(t);
+      if (isStockPriceStale(cached.fetched_at)) stale.push(t);
     } else {
       stale.push(t);
     }
